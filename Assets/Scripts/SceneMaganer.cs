@@ -3,21 +3,12 @@ using UnityEngine.SceneManagement;
 
 public class SceneMaganer : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public void LoadScene(string sceneName)
     {
-        SceneManager.LoadScene(sceneName);
+        if (sceneName != string.Empty)
+            SceneManager.LoadScene(sceneName);
+        else
+            Debug.LogWarning("Scene not selected");
     }
 
     public void LoadNextScene()
