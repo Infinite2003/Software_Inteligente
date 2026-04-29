@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 
 public class CardGameManager : MonoBehaviour
 {
-    private static CardGameManager _instance;
+    public static CardGameManager _instance;
     private List <TCGPCard> pool = new List<TCGPCard>();
     private DeckBuilder deckBuilder;
     private InputAction interactiveKey;
@@ -47,10 +47,11 @@ public class CardGameManager : MonoBehaviour
         }
     }
 
-    public void CreateDeck()
+    public List<TCGPCard> CreateDeck()
     {
         // Llamada ajustada al método que implementamos en DeckBuilder, usando pool y un targetSize
         var miMazo = deckBuilder.BuildDeck(pool, 20);
+        return miMazo;
         Debug.Log($"Mazo creado con {miMazo.Count} cartas.");
     }
 
