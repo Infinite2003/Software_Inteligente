@@ -5,26 +5,25 @@ using UnityEngine;
 [System.Serializable]
 public class TCGPCard
 {
-    public string id; // Cambiado a string (Ej: "A1-001")
-    public string set_number;
+    public string id;
     public string name;
-    public string category; // "Pokémon", "Trainer", etc.
-    public string sub_category;
+
+    public CardCategory category;
+    public PokemonStage sub_category;
+    public PokemonType type;
+
     public int hp;
     public int retreat_cost;
-    public string rarity; // Nueva propiedad añadida
-    public string type;
-    public Weakness weakness; // Cambiado de string a la clase Weakness
+
     public string description;
+
     public List<Move> moves;
-    public Ability ability;
-    public List<string> packs;
 }
 
-[System.Serializable]
+[Serializable]
 public class Move
 {
-    public List<string> cost; // Cambiado de List<Cost> a List<string> que lee el array {"Planta", "Incolora"}
+    public List<string> cost;
     public string name;
     public string damage;
 }
@@ -32,7 +31,7 @@ public class Move
 [System.Serializable]
 public class Weakness
 {
-    public string type;
+    public PokemonType type;
     public string value;
 }
 

@@ -1,91 +1,128 @@
-using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
-using System;
-using UnityEngine.InputSystem;
 
 public class CardGameManager : MonoBehaviour
 {
-    private static CardGameManager _instance;
-    private List <TCGPCard> pool = new List<TCGPCard>();
+    private List<TCGPCard> pool = new List<TCGPCard>();
     private DeckBuilder deckBuilder;
-    private InputAction interactiveKey;
 
-    // Es buena práctica exponer el singleton mediante una propiedad pública si planeas accederlo desde otros scripts.
-    public static CardGameManager Instance => _instance;
-
-    private void Awake()
-    {
-        if(_instance == null)
-        {  
-            _instance = this; 
-            // Opcional: si quieres que el Game Manager persista entre escenas.
-            // DontDestroyOnLoad(gameObject);
-        }
-        else if (_instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-    }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         deckBuilder = new DeckBuilder();
-        interactiveKey = InputSystem.actions.FindAction("Interact");
-        // Cargar cartas desde json que se llama "tcg_pocket_card_unity" en Assets/Resources/
         LoadCards("tcg_pocket_card_unity");
     }
 
-    // Update is called once per frame
-    void Update()
+    public List<TCGPCard> CreateDeck()
     {
-        if(interactiveKey.WasReleasedThisFrame())
+        DeckPreferences prefs = new DeckPreferences
         {
-            Debug.Log("Se esta creando el mazo");
-            CreateDeck();
-        }
-    }
+            preferredType = PokemonType.Agua,
+            playstyle = BattleType.Aggro
+        };
 
-    public void CreateDeck()
-    {
-        // Llamada ajustada al método que implementamos en DeckBuilder, usando pool y un targetSize
-        var miMazo = deckBuilder.BuildDeck(pool, 20);
-        Debug.Log($"Mazo creado con {miMazo.Count} cartas.");
+        var deck = deckBuilder.BuildDeck(pool, 20, prefs);
+        Debug.Log($"Mazo creado: {deck.Count} cartas");
+        return deck;
     }
 
     private void LoadCards(string jsonFileName)
     {
-        // 1. Cargamos el archivo JSON desde la carpeta Resources de Unity
-        // Es necesario que el json esté dentro de una carpeta llamada "Resources" (ej: Assets/Resources/cards_data.json)
-        TextAsset jsonTextFile = Resources.Load<TextAsset>(jsonFileName);
+        TextAsset json = Resources.Load<TextAsset>(jsonFileName);
 
-        if (jsonTextFile != null)
-        {
-            // Unity JsonUtility requiere que los arrays JSON estén envueltos en un objeto.
-            // Formato esperado de tu JSON: { "cards": [ { "id": 1, ... }, { "id": 2, ... } ] }
-            CardDatabase database = JsonUtility.FromJson<CardDatabase>(jsonTextFile.text);
+        CardDatabaseRaw db = JsonUtility.FromJson<CardDatabaseRaw>(json.text);
 
-            if (database != null && database.cards != null)
-            {
-                pool = database.cards;
-                Debug.Log($"Se cargaron {pool.Count} cartas exitosamente desde {jsonFileName}");
-            }
-            else
-            {
-                Debug.LogError("El JSON fue leído, pero la estructura no coincide con CardDatabase.");
-            }
-        }
-        else
+        pool = ConvertToGameCards(db.cards);
+    }
+
+    private List<TCGPCard> ConvertToGameCards(List<TCGPCardRaw> rawCards)
+    {
+        List<TCGPCard> result = new List<TCGPCard>();
+
+        foreach (var raw in rawCards)
         {
-            Debug.LogError($"No se pudo cargar el archivo JSON: {jsonFileName}");
+            TCGPCard card = new TCGPCard
+            {
+                id = raw.id,
+                name = raw.name,
+                hp = raw.hp,
+                retreat_cost = raw.retreat_cost,
+                description = raw.description,
+
+                category = ParseCategory(raw.category),
+                sub_category = ParseStage(raw.sub_category),
+                type = ParseType(raw.type),
+
+                moves = ConvertMoves(raw.moves)
+            };
+
+            result.Add(card);
         }
+
+        return result;
+    }
+
+    private List<Move> ConvertMoves(List<MoveRaw> rawMoves)
+    {
+        List<Move> moves = new List<Move>();
+
+        if (rawMoves == null) return moves;
+
+        foreach (var m in rawMoves)
+        {
+            moves.Add(new Move
+            {
+                name = m.name,
+                damage = m.damage,
+                cost = m.cost
+            });
+        }
+
+        return moves;
+    }
+
+    private CardCategory ParseCategory(string value)
+    {
+        return value.ToLower() switch
+        {
+            "pokemon" => CardCategory.Pokemon,
+            "trainer" => CardCategory.Trainer,
+            "item" => CardCategory.Item,
+            "supporter" => CardCategory.Supporter,
+            _ => CardCategory.Pokemon
+        };
+    }
+
+    private PokemonStage ParseStage(string value)
+    {
+        return value.ToLower() switch
+        {
+            "basic" => PokemonStage.Basic,
+            "stage1" => PokemonStage.Stage1,
+            "stage2" => PokemonStage.Stage2,
+            _ => PokemonStage.Basic
+        };
+    }
+
+    private PokemonType ParseType(string value)
+    {
+        return value.ToLower() switch
+        {
+            "grass" => PokemonType.Planta,
+            "fire" => PokemonType.Fuego,
+            "water" => PokemonType.Agua,
+            "electric" => PokemonType.Rayo,
+            "psychic" => PokemonType.Psiquico,
+            "fighting" => PokemonType.Lucha,
+            "dark" => PokemonType.Oscuro,
+            "metal" => PokemonType.Metalico,
+            "dragon" => PokemonType.Dragon,
+            _ => PokemonType.Incolora
+        };
     }
 }
 
-// Wrapper necesario para que Unity's JsonUtility pueda leer listas en la raíz del objeto JSON
 [System.Serializable]
-public class CardDatabase
+public class CardDatabaseRaw
 {
-    public List<TCGPCard> cards;
+    public List<TCGPCardRaw> cards;
 }
