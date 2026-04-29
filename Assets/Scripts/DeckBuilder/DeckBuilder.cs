@@ -92,10 +92,10 @@ public class DeckBuilder
     {
         float value = 0f;
 
-        if (candidate.category == "Pokemon")
+        if (candidate.category == "Pokémon" || candidate.category == "Pokemon")
         {
             value += candidate.hp * 0.1f; // Bonificación base por HP
-            
+
             // Evaluar los movimientos
             if (candidate.moves != null)
             {
@@ -138,11 +138,11 @@ public class DeckBuilder
         if (currentDeck.Count == 0) return 0f;
 
         // 1. Sinergia de Tipos de Pokémon
-        if (candidate.category == "Pokemon" && !string.IsNullOrEmpty(candidate.type))
+        if ((candidate.category == "Pokémon" || candidate.category == "Pokemon") && !string.IsNullOrEmpty(candidate.type))
         {
             foreach (var card in currentDeck)
             {
-                if (card.category == "Pokemon" && card.type == candidate.type)
+                if ((card.category == "Pokémon" || card.category == "Pokemon") && card.type == candidate.type)
                 {
                     synergy += 2.0f; // Premiar compartir el mismo tipo de energía/Pokemon
                 }
@@ -151,12 +151,12 @@ public class DeckBuilder
 
         // 2. Sinergia de Evolución (Si el candidato es Fase 1/2 "Stage 1", buscar su Básico)
         // Nota: esto es una simplificación, requeriría la lógica real de "Evoluciona de..."
-        if (candidate.category == "Pokemon" && candidate.sub_category != "Basic")
+        if ((candidate.category == "Pokémon" || candidate.category == "Pokemon") && candidate.sub_category != "Basic")
         {
             bool hasBasic = false;
             foreach (var card in currentDeck)
             {
-                if (card.category == "Pokemon" && card.sub_category == "Basic")
+                if ((card.category == "Pokémon" || card.category == "Pokemon") && card.sub_category == "Basic")
                 {
                     // Asumimos que si hay básicos y estamos evaluando un Stage 1/2, le damos sinergia
                     hasBasic = true;
@@ -191,12 +191,12 @@ public class DeckBuilder
 
         foreach (var card in currentDeck)
         {
-            if (card.category == "Pokemon") pokemonCount++;
+            if (card.category == "Pokémon" || card.category == "Pokemon") pokemonCount++;
             else trainerCount++;
         }
 
         // Regla típica en mazos de 20 cartas: buscar un balance como 12 Pokemon / 8 Trainers
-        if (candidate.category == "Pokemon")
+        if (candidate.category == "Pokémon" || candidate.category == "Pokemon")
         {
             if (pokemonCount > 12) return -5f; // Ya hay muchos Pokemon
             return 2f;
@@ -210,12 +210,12 @@ public class DeckBuilder
     private float CurveScore(TCGPCard candidate, List<TCGPCard> currentDeck)
     {
         // Penalizar costes de ataque muy altos si no hay suficientes ataques baratos
-        if (candidate.category == "Pokemon" && candidate.moves != null && candidate.moves.Count > 0)
+        if ((candidate.category == "Pokémon" || candidate.category == "Pokemon") && candidate.moves != null && candidate.moves.Count > 0)
         {
             float avgCost = 0f;
             foreach (var move in candidate.moves)
             {
-                avgCost += (move.costs != null) ? move.costs.Count : 0;
+                avgCost += (move.cost != null) ? move.cost.Count : 0;
             }
             avgCost /= candidate.moves.Count;
 

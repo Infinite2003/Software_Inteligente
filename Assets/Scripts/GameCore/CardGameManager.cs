@@ -2,12 +2,14 @@ using NUnit.Framework;
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using UnityEngine.InputSystem;
 
 public class CardGameManager : MonoBehaviour
 {
     private static CardGameManager _instance;
     private List <TCGPCard> pool = new List<TCGPCard>();
     private DeckBuilder deckBuilder;
+    private InputAction interactiveKey;
 
     // Es buena práctica exponer el singleton mediante una propiedad pública si planeas accederlo desde otros scripts.
     public static CardGameManager Instance => _instance;
@@ -30,16 +32,17 @@ public class CardGameManager : MonoBehaviour
     void Start()
     {
         deckBuilder = new DeckBuilder();
-
-        // Cargar cartas desde json suponiendo que el archivo se llame "cards_data.json" en Assets/Resources/
-        LoadCards("cards_data");
+        interactiveKey = InputSystem.actions.FindAction("Interact");
+        // Cargar cartas desde json que se llama "tcg_pocket_card_unity" en Assets/Resources/
+        LoadCards("tcg_pocket_card_unity");
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyUp(KeyCode.Escape))
+        if(interactiveKey.WasReleasedThisFrame())
         {
+            Debug.Log("Se esta creando el mazo");
             CreateDeck();
         }
     }
