@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 
 public class CardGameManager : MonoBehaviour
 {
+    public List<TCGPCard> currentDeck;
     public static CardGameManager _instance;
     private List <TCGPCard> pool = new List<TCGPCard>();
     private DeckBuilder deckBuilder;
@@ -20,7 +21,7 @@ public class CardGameManager : MonoBehaviour
         {  
             _instance = this; 
             // Opcional: si quieres que el Game Manager persista entre escenas.
-            // DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject);
         }
         else if (_instance != this)
         {
@@ -35,6 +36,8 @@ public class CardGameManager : MonoBehaviour
         interactiveKey = InputSystem.actions.FindAction("Interact");
         // Cargar cartas desde json que se llama "tcg_pocket_card_unity" en Assets/Resources/
         LoadCards("tcg_pocket_card_unity");
+
+
     }
 
     // Update is called once per frame
@@ -49,6 +52,9 @@ public class CardGameManager : MonoBehaviour
 
     public List<TCGPCard> CreateDeck()
     {
+        currentDeck = deckBuilder.BuildDeck(pool, 20);
+
+        Debug.Log($"Mazo creado con {currentDeck.Count} cartas.");
         // Llamada ajustada al método que implementamos en DeckBuilder, usando pool y un targetSize
         var miMazo = deckBuilder.BuildDeck(pool, 20);
         return miMazo;
