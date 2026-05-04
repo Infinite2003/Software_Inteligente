@@ -1,31 +1,35 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
+using UnityEditor.Rendering;
 
 public class DeckBuilder
 {
-    /// <summary>
-    /// Builds a deck using an additive algorithm.
-    /// It starts with an empty deck and iteratively evaluates and adds the best card from the pool 
-    /// until the target deck size is reached.
-    /// </summary>
-    /// <param name="pool">The pool of available cards.</param>
-    /// <param name="targetSize">The desired size of the deck.</param>
-    /// <returns>A list of cards representing the final deck.</returns>
-    public List<TCGPCard> BuildDeck(List<TCGPCard> pool, int targetSize)
+    private DeckPreferences preferences;
+
+    public List<TCGPCard> BuildDeck(List<TCGPCard> pool, int targetSize, DeckPreferences prefs)
     {
+        preferences = prefs;
+
+        List<TCGPCard> filteredPool = pool.FindAll(card =>
+        {
+            if (card.category == CardCategory.Pokemon)
+                return card.type == preferences.preferredType;
+
+            return true;
+        });
+
         List<TCGPCard> currentDeck = new List<TCGPCard>();
 
-        // Copy the pool so we can safely remove cards if we don't want duplicates
-        List<TCGPCard> availableCards = new List<TCGPCard>(pool);
+        currentDeck.AddRange(SelectCoreCards(filteredPool));
+
+        List<TCGPCard> availableCards = new List<TCGPCard>(filteredPool);
 
         while (currentDeck.Count < targetSize && availableCards.Count > 0)
         {
             TCGPCard bestCard = null;
             float bestScore = float.MinValue;
 
-            // Find the best card to add to the deck
-            foreach (TCGPCard card in availableCards)
+            foreach (var card in availableCards)
             {
                 float score = EvaluateCardContribution(card, currentDeck);
 
@@ -38,205 +42,283 @@ public class DeckBuilder
 
             if (bestCard != null)
             {
-                // Add the best card found to the deck
                 currentDeck.Add(bestCard);
-
-                // Remove it from the available pool so it's not chosen again
-                // (Omit this if you allow multiple copies of the same card)
                 availableCards.Remove(bestCard);
             }
-            else
-            {
-                // No valid card found, break to avoid infinite loop
-                break;
-            }
+            else break;
         }
 
         return currentDeck;
     }
 
-    /// <summary>
-    /// Evaluates how much value a card adds to the current deck.
-    /// Replace this logic with your specific game heuristics.
-    /// </summary>
-    private float EvaluateCardContribution(TCGPCard candidate, List<TCGPCard> currentDeck)
+    private List<TCGPCard> SelectCoreCards(List<TCGPCard> pool)
     {
-        // 1. Validación dura
-        if (!IsValid(candidate, currentDeck))
+        List<TCGPCard> core = new List<TCGPCard>();
+
+        foreach (var card in pool)
+        {
+            if (card.category == CardCategory.Pokemon &&
+                card.sub_category == PokemonStage.Basic &&
+                card.type == preferences.preferredType)
+            {
+                core.Add(card);
+
+                if (core.Count >= 3)
+                    break;
+            }
+        }
+
+        return core;
+    }
+
+    private float EvaluateCardContribution(TCGPCard candidate, List<TCGPCard> deck)
+    {
+        if (!IsValid(candidate, deck))
             return float.MinValue;
 
         float score = 0f;
 
-        // 2. Valor base (Calculado según TCGPCard ya que no tiene propiedad 'Value')
-        score += CalculateBaseValue(candidate);
+        // 1. Base mínima
+        score += CalculateBaseValue(candidate) * 0.5f;
 
-        // 3. Sinergia
-        score += SynergyScore(candidate, currentDeck) * 2.0f;
+        // 2. ESTRATEGIA (principal)
+        score += EvaluateByPlaystyle(candidate, deck) * 2.5f;
+        score += SupportNeedScore(candidate, deck) * 2f;
 
-        // 4. Consistencia
-        score += ConsistencyScore(candidate, currentDeck) * 1.5f;
+        // 3. Ajustes secundarios
+        score += SynergyScore(candidate, deck) * 1.5f;
+        score += ConsistencyScore(candidate) * 1.2f;
+        score += ResourceBalanceScore(candidate, deck);
+        score += CurveScore(candidate);
 
-        // 5. Balance recursos
-        score += ResourceBalanceScore(candidate, currentDeck) * 1.5f;
-
-        // 6. Curva
-        score += CurveScore(candidate, currentDeck);
-
-        // 7. Penalización por redundancia
-        score -= RedundancyPenalty(candidate, currentDeck);
+        // 4. Penalización
+        score -= RedundancyPenalty(candidate, deck);
 
         return score;
-
     }
-    private float CalculateBaseValue(TCGPCard candidate)
+
+    private float EvaluateByPlaystyle(TCGPCard card, List<TCGPCard> deck)
     {
-        float value = 0f;
-
-        if (candidate.category == "Pokémon" || candidate.category == "Pokemon")
+        return preferences.playstyle switch
         {
-            value += candidate.hp * 0.1f; // Bonificación base por HP
+            BattleType.Aggro => EvaluateAggro(card),
+            BattleType.Control => EvaluateControl(card),
+            BattleType.Combo => EvaluateCombo(card, deck),
+            _ => 0f
+        };
+    }
 
-            // Evaluar los movimientos
-            if (candidate.moves != null)
+    private float EvaluateAggro(TCGPCard card)
+    {
+        float score = 0f;
+
+        if (card.category == CardCategory.Pokemon && card.moves != null)
+        {
+            foreach (var move in card.moves)
             {
-                foreach (var move in candidate.moves)
+                int cost = move.cost?.Count ?? 0;
+
+                if (int.TryParse(move.damage, out int dmg))
                 {
-                    if (int.TryParse(move.damage, out int dmg))
-                    {
-                        value += dmg * 0.2f; // Mientras más daño pueda hacer, mejor valor base
-                    }
+                    // daño eficiente (daño/costo)
+                    if (cost > 0)
+                        score += (float)dmg / cost;
+
+                    // daño directo
+                    score += dmg * 0.2f;
+
+                    // castigar ataques caros
+                    if (cost > 3)
+                        score -= 3f;
                 }
             }
         }
-        else if (candidate.category == "Trainer" || candidate.category == "Item" || candidate.category == "Supporter")
+        if (card.category != CardCategory.Pokemon)
         {
-            // Las cartas de Trainer / Item tienen un valor base fijo por su utilidad
-            value += 10f; 
+            if (card.description != null && card.description.Contains("draw"))
+                score += 5f;
         }
+
+        return score;
+    }
+
+    private float EvaluateControl(TCGPCard card)
+    {
+        float score = 0f;
+
+        if (!string.IsNullOrEmpty(card.description))
+        {
+            string desc = card.description.ToLower();
+
+            if (desc.Contains("discard")) score += 6f;
+            if (desc.Contains("draw")) score += 4f;
+            if (desc.Contains("heal")) score += 4f;
+            if (desc.Contains("switch")) score += 3f;
+        }
+
+        // premiar resistencia
+        if (card.category == CardCategory.Pokemon)
+            score += card.hp * 0.15f;
+
+        return score;
+    }
+
+    private float EvaluateCombo(TCGPCard card, List<TCGPCard> deck)
+    {
+        float score = 0f;
+
+        // sinergia fuerte
+        score += SynergyScore(card, deck) * 2f;
+
+        // penalizar cartas aisladas
+        if (SynergyScore(card, deck) == 0)
+            score -= 3f;
+
+        // bonus si tiene habilidad
+        if (card.ability != null && !string.IsNullOrEmpty(card.ability.name))
+            score += 4f;
+
+        return score;
+    }
+
+    private float CalculateBaseValue(TCGPCard card)
+    {
+        float value = 0f;
+
+        if (card.category == CardCategory.Pokemon)
+        {
+            value += card.hp * 0.1f;
+
+            if (card.moves != null)
+            {
+                foreach (var move in card.moves)
+                {
+                    if (int.TryParse(move.damage, out int dmg))
+                        value += dmg * 0.2f;
+                }
+            }
+        }
+        else value += 10f;
 
         return value;
     }
 
-    private bool IsValid(TCGPCard candidate, List<TCGPCard> currentDeck)
+    private bool IsValid(TCGPCard candidate, List<TCGPCard> deck)
     {
-        // Regla oficial de TCG POCKET: Máximo 2 copias de la misma carta por mazo (por nombre/ID)
-        int copyCount = 0;
-        foreach (var card in currentDeck)
-        {
-            if (card.name == candidate.name) copyCount++;
-        }
-
-        if (copyCount >= 2)
-            return false;
-
-        return true; 
+        int count = deck.FindAll(c => c.name == candidate.name).Count;
+        return count < 2;
     }
-    private float SynergyScore(TCGPCard candidate, List<TCGPCard> currentDeck)
+
+    private float SynergyScore(TCGPCard candidate, List<TCGPCard> deck)
     {
-        float synergy = 0f;
+        float score = 0f;
 
-        if (currentDeck.Count == 0) return 0f;
-
-        // 1. Sinergia de Tipos de Pokémon
-        if ((candidate.category == "Pokémon" || candidate.category == "Pokemon") && !string.IsNullOrEmpty(candidate.type))
+        foreach (var card in deck)
         {
-            foreach (var card in currentDeck)
+            // tipo
+            if (card.type == candidate.type)
+                score += 2f;
+
+            // evolución básica → stage
+            if (card.sub_category == PokemonStage.Basic &&
+                candidate.sub_category != PokemonStage.Basic)
             {
-                if ((card.category == "Pokémon" || card.category == "Pokemon") && card.type == candidate.type)
-                {
-                    synergy += 2.0f; // Premiar compartir el mismo tipo de energía/Pokemon
-                }
+                score += 3f;
+            }
+
+            // habilidad + texto relacionado
+            if (card.ability != null && candidate.description != null)
+            {
+                if (candidate.description.Contains(card.name, StringComparison.OrdinalIgnoreCase))
+                    score += 5f;
             }
         }
 
-        // 2. Sinergia de Evolución (Si el candidato es Fase 1/2 "Stage 1", buscar su Básico)
-        // Nota: esto es una simplificación, requeriría la lógica real de "Evoluciona de..."
-        if ((candidate.category == "Pokémon" || candidate.category == "Pokemon") && candidate.sub_category != "Basic")
+        return score;
+    }
+
+    private float ConsistencyScore(TCGPCard card)
+    {
+        if (card.category == CardCategory.Supporter || card.category == CardCategory.Item)
         {
-            bool hasBasic = false;
-            foreach (var card in currentDeck)
-            {
-                if ((card.category == "Pokémon" || card.category == "Pokemon") && card.sub_category == "Basic")
-                {
-                    // Asumimos que si hay básicos y estamos evaluando un Stage 1/2, le damos sinergia
-                    hasBasic = true;
-                    break;
-                }
-            }
-            if (!hasBasic) synergy -= 10f; // Penalizar severamente si metemos evolución sin básicos
-            else synergy += 5f;            // Premiar si hay básicos para evolucionarlo
+            if (string.IsNullOrEmpty(card.description)) return 0f;
+
+            string desc = card.description.ToLower();
+            float score = 0f;
+
+            if (desc.Contains("draw")) score += 6f;
+            if (desc.Contains("search")) score += 6f;
+            if (desc.Contains("deck")) score += 4f;
+            if (desc.Contains("energy")) score += 3f;
+
+            return score;
         }
 
-        return synergy;
+        return 0f;
     }
-    private float ConsistencyScore(TCGPCard candidate, List<TCGPCard> currentDeck)
-    {
-        // Premiar añadir Trainers de robo / búsqueda de Pokemon ("Supporter")
-        if (candidate.category == "Supporter" || candidate.category == "Item")
-        {
-            // Podrías analizar la 'descripción' buscando palabras como "Draw" o "Search"
-            if (!string.IsNullOrEmpty(candidate.description) && 
-               (candidate.description.Contains("Draw", System.StringComparison.OrdinalIgnoreCase) || 
-                candidate.description.Contains("Search", System.StringComparison.OrdinalIgnoreCase)))
-            {
-                return 5.0f; 
-            }
-        }
-        return 0f; 
-    }
-    private float ResourceBalanceScore(TCGPCard candidate, List<TCGPCard> currentDeck)
-    {
-        int pokemonCount = 0;
-        int trainerCount = 0;
 
-        foreach (var card in currentDeck)
+    private float ResourceBalanceScore(TCGPCard candidate, List<TCGPCard> deck)
+    {
+        int pokemon = deck.FindAll(c => c.category == CardCategory.Pokemon).Count;
+        int trainer = deck.Count - pokemon;
+
+        if (candidate.category == CardCategory.Pokemon)
+            return pokemon > 12 ? -5f : 2f;
+        else
+            return trainer > 8 ? -5f : 2f;
+    }
+
+    private float CurveScore(TCGPCard card)
+    {
+        if (card.category == CardCategory.Pokemon && card.moves != null)
         {
-            if (card.category == "Pokémon" || card.category == "Pokemon") pokemonCount++;
-            else trainerCount++;
+            float avg = 0f;
+
+            foreach (var move in card.moves)
+                avg += move.cost?.Count ?? 0;
+
+            avg /= card.moves.Count;
+
+            if (avg <= 1.5f) return 3f;
+            if (avg > 3f) return -2f;
         }
 
-        // Regla típica en mazos de 20 cartas: buscar un balance como 12 Pokemon / 8 Trainers
-        if (candidate.category == "Pokémon" || candidate.category == "Pokemon")
-        {
-            if (pokemonCount > 12) return -5f; // Ya hay muchos Pokemon
-            return 2f;
-        }
-        else 
-        {
-            if (trainerCount > 8) return -5f; // Ya hay muchos Trainers
-            return 2f;
-        }
+        return 0f;
     }
-    private float CurveScore(TCGPCard candidate, List<TCGPCard> currentDeck)
-    {
-        // Penalizar costes de ataque muy altos si no hay suficientes ataques baratos
-        if ((candidate.category == "Pokémon" || candidate.category == "Pokemon") && candidate.moves != null && candidate.moves.Count > 0)
-        {
-            float avgCost = 0f;
-            foreach (var move in candidate.moves)
-            {
-                avgCost += (move.cost != null) ? move.cost.Count : 0;
-            }
-            avgCost /= candidate.moves.Count;
 
-            // Premiar un coste promedio bajo para los primeros turnos
-            if (avgCost <= 1.5f) return 3f;  
-            if (avgCost > 3f) return -2f;   
-        }
-        return 0f; 
-    }
-    private float RedundancyPenalty(TCGPCard candidate, List<TCGPCard> currentDeck)
+    private float RedundancyPenalty(TCGPCard card, List<TCGPCard> deck)
     {
-        float penalty = 0f;
-        // Si ya tengo una copia en el mazo, le damos menos prioridad a la segunda
-        foreach (var card in currentDeck)
+        return deck.Exists(c => c.name == card.name) ? 5f : 0f;
+    }
+
+    private float SupportNeedScore(TCGPCard candidate, List<TCGPCard> deck)
+    {
+        int pokemon = deck.FindAll(c => c.category == CardCategory.Pokemon).Count;
+        int trainer = deck.Count - pokemon;
+
+        float score = 0f;
+
+        // Si hay pocos trainers → premiar fuerte
+        if (trainer < 5)
         {
-            if (card.name == candidate.name)
-            {
-                penalty += 5f; // Penaliza intentar meter copias repetidas a no ser que sea muuuuy buena
-            }
+            if (candidate.category != CardCategory.Pokemon)
+                score += 15f;
         }
-        return penalty; 
+
+        // Si hay demasiados pokemon → castigar
+        if (pokemon > 12)
+        {
+            if (candidate.category == CardCategory.Pokemon)
+                score -= 10f;
+        }
+
+        return score;
     }
 }
 
+[Serializable]
+public class DeckPreferences
+{
+    public PokemonType preferredType;
+    public BattleType playstyle;
+}
