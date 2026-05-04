@@ -78,29 +78,37 @@ public class DeckBuilder
 
         float score = 0f;
 
-        score += CalculateBaseValue(candidate);
-        score += SynergyScore(candidate, deck) * 2f;
-        score += ConsistencyScore(candidate) * 1.5f;
-        score += ResourceBalanceScore(candidate, deck) * 1.5f;
+        // 1. Base mínima
+        score += CalculateBaseValue(candidate) * 0.5f;
+
+        // 2. ESTRATEGIA (principal)
+        score += EvaluateByPlaystyle(candidate, deck) * 2.5f;
+        score += SupportNeedScore(candidate, deck) * 2f;
+
+        // 3. Ajustes secundarios
+        score += SynergyScore(candidate, deck) * 1.5f;
+        score += ConsistencyScore(candidate) * 1.2f;
+        score += ResourceBalanceScore(candidate, deck);
         score += CurveScore(candidate);
+
+        // 4. Penalización
         score -= RedundancyPenalty(candidate, deck);
-        score += ApplyPlaystyle(candidate, deck);
 
         return score;
     }
 
-    private float ApplyPlaystyle(TCGPCard card, List<TCGPCard> deck)
+    private float EvaluateByPlaystyle(TCGPCard card, List<TCGPCard> deck)
     {
-        switch (preferences.playstyle)
+        return preferences.playstyle switch
         {
-            case BattleType.Aggro: return AggroScore(card);
-            case BattleType.Control: return ControlScore(card);
-            case BattleType.Combo: return SynergyScore(card, deck) * 2f;
-        }
-        return 0f;
+            BattleType.Aggro => EvaluateAggro(card),
+            BattleType.Control => EvaluateControl(card),
+            BattleType.Combo => EvaluateCombo(card, deck),
+            _ => 0f
+        };
     }
 
-    private float AggroScore(TCGPCard card)
+    private float EvaluateAggro(TCGPCard card)
     {
         float score = 0f;
 
@@ -108,23 +116,69 @@ public class DeckBuilder
         {
             foreach (var move in card.moves)
             {
+                int cost = move.cost?.Count ?? 0;
+
                 if (int.TryParse(move.damage, out int dmg))
-                    score += dmg * 0.3f;
+                {
+                    // daño eficiente (daño/costo)
+                    if (cost > 0)
+                        score += (float)dmg / cost;
+
+                    // daño directo
+                    score += dmg * 0.2f;
+
+                    // castigar ataques caros
+                    if (cost > 3)
+                        score -= 3f;
+                }
             }
+        }
+        if (card.category != CardCategory.Pokemon)
+        {
+            if (card.description != null && card.description.Contains("draw"))
+                score += 5f;
         }
 
         return score;
     }
 
-    private float ControlScore(TCGPCard card)
+    private float EvaluateControl(TCGPCard card)
     {
-        if (!string.IsNullOrEmpty(card.description) &&
-            card.description.Contains("discard", StringComparison.OrdinalIgnoreCase))
+        float score = 0f;
+
+        if (!string.IsNullOrEmpty(card.description))
         {
-            return 5f;
+            string desc = card.description.ToLower();
+
+            if (desc.Contains("discard")) score += 6f;
+            if (desc.Contains("draw")) score += 4f;
+            if (desc.Contains("heal")) score += 4f;
+            if (desc.Contains("switch")) score += 3f;
         }
 
-        return 0f;
+        // premiar resistencia
+        if (card.category == CardCategory.Pokemon)
+            score += card.hp * 0.15f;
+
+        return score;
+    }
+
+    private float EvaluateCombo(TCGPCard card, List<TCGPCard> deck)
+    {
+        float score = 0f;
+
+        // sinergia fuerte
+        score += SynergyScore(card, deck) * 2f;
+
+        // penalizar cartas aisladas
+        if (SynergyScore(card, deck) == 0)
+            score -= 3f;
+
+        // bonus si tiene habilidad
+        if (card.ability != null && !string.IsNullOrEmpty(card.ability.name))
+            score += 4f;
+
+        return score;
     }
 
     private float CalculateBaseValue(TCGPCard card)
@@ -161,11 +215,22 @@ public class DeckBuilder
 
         foreach (var card in deck)
         {
-            if (card.category == CardCategory.Pokemon &&
-                candidate.category == CardCategory.Pokemon &&
-                card.type == candidate.type)
-            {
+            // tipo
+            if (card.type == candidate.type)
                 score += 2f;
+
+            // evolución básica → stage
+            if (card.sub_category == PokemonStage.Basic &&
+                candidate.sub_category != PokemonStage.Basic)
+            {
+                score += 3f;
+            }
+
+            // habilidad + texto relacionado
+            if (card.ability != null && candidate.description != null)
+            {
+                if (candidate.description.Contains(card.name, StringComparison.OrdinalIgnoreCase))
+                    score += 5f;
             }
         }
 
@@ -176,12 +241,17 @@ public class DeckBuilder
     {
         if (card.category == CardCategory.Supporter || card.category == CardCategory.Item)
         {
-            if (!string.IsNullOrEmpty(card.description) &&
-                (card.description.Contains("draw", StringComparison.OrdinalIgnoreCase) ||
-                 card.description.Contains("search", StringComparison.OrdinalIgnoreCase)))
-            {
-                return 5f;
-            }
+            if (string.IsNullOrEmpty(card.description)) return 0f;
+
+            string desc = card.description.ToLower();
+            float score = 0f;
+
+            if (desc.Contains("draw")) score += 6f;
+            if (desc.Contains("search")) score += 6f;
+            if (desc.Contains("deck")) score += 4f;
+            if (desc.Contains("energy")) score += 3f;
+
+            return score;
         }
 
         return 0f;
@@ -220,8 +290,33 @@ public class DeckBuilder
     {
         return deck.Exists(c => c.name == card.name) ? 5f : 0f;
     }
+
+    private float SupportNeedScore(TCGPCard candidate, List<TCGPCard> deck)
+    {
+        int pokemon = deck.FindAll(c => c.category == CardCategory.Pokemon).Count;
+        int trainer = deck.Count - pokemon;
+
+        float score = 0f;
+
+        // Si hay pocos trainers → premiar fuerte
+        if (trainer < 5)
+        {
+            if (candidate.category != CardCategory.Pokemon)
+                score += 15f;
+        }
+
+        // Si hay demasiados pokemon → castigar
+        if (pokemon > 12)
+        {
+            if (candidate.category == CardCategory.Pokemon)
+                score -= 10f;
+        }
+
+        return score;
+    }
 }
 
+[Serializable]
 public class DeckPreferences
 {
     public PokemonType preferredType;

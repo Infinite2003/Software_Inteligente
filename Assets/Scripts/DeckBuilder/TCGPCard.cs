@@ -17,6 +17,9 @@ public class TCGPCard
 
     public string description;
 
+    public Weakness weakness; // Debilidad que cubrimos en DeckBuilder pero faltaba declarar en TCGPCard
+    public Ability ability;   // Habilidad que evaluamos en combos pero faltaba declarar en TCGPCard
+
     public List<Move> moves;
 }
 

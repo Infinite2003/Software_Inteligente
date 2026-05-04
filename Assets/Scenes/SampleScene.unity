@@ -148,6 +148,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7c9c3e654957da42983c871e23fcaab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardGameManager
+  prefs:
+    preferredType: 5
+    playstyle: 0
 --- !u!4 &1161907496
 Transform:
   m_ObjectHideFlags: 0

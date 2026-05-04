@@ -1,27 +1,59 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class CardGameManager : MonoBehaviour
 {
     private List<TCGPCard> pool = new List<TCGPCard>();
     private DeckBuilder deckBuilder;
+    private InputAction interactiveKey;
 
+    [SerializeField]
+    private DeckPreferences prefs;
     void Start()
     {
         deckBuilder = new DeckBuilder();
         LoadCards("tcg_pocket_card_unity");
+
+        // Intentar encontrar la acción si el InputActionAsset existe en InputSystem
+        if (InputSystem.actions != null)
+        {
+            interactiveKey = InputSystem.actions.FindAction("Interact");
+            if (interactiveKey == null)
+            {
+                Debug.LogWarning("No se encontró la acción 'Interact' en InputSystem.actions. Asegúrate de tenerla configurada.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("InputSystem.actions es null. Asegúrate de tener un InputActionAsset activo en tu proyecto.");
+        }
+    }
+
+    private void Update()
+    {
+        // Revisamos que interactiveKey no sea null antes de invocarlo para no romper el juego.
+        if (interactiveKey != null && interactiveKey.WasReleasedThisFrame())
+        {
+            CreateDeck();
+        }
+        // Fallback rápido con teclado tradicional para que no te estanques si InputSystem no está configurado
+        else if (Keyboard.current != null && Keyboard.current.spaceKey.wasReleasedThisFrame)
+        {
+            CreateDeck();
+        }
     }
 
     public List<TCGPCard> CreateDeck()
     {
-        DeckPreferences prefs = new DeckPreferences
-        {
-            preferredType = PokemonType.Agua,
-            playstyle = BattleType.Aggro
-        };
+        
 
         var deck = deckBuilder.BuildDeck(pool, 20, prefs);
         Debug.Log($"Mazo creado: {deck.Count} cartas");
+
+        foreach( var card in deck )
+            Debug.Log($"Carta: {card.name}");
+
         return deck;
     }
 
@@ -32,6 +64,7 @@ public class CardGameManager : MonoBehaviour
         CardDatabaseRaw db = JsonUtility.FromJson<CardDatabaseRaw>(json.text);
 
         pool = ConvertToGameCards(db.cards);
+        Debug.Log($"Se cargaron {pool.Count} cartas desde {jsonFileName}");
     }
 
     private List<TCGPCard> ConvertToGameCards(List<TCGPCardRaw> rawCards)
@@ -52,7 +85,11 @@ public class CardGameManager : MonoBehaviour
                 sub_category = ParseStage(raw.sub_category),
                 type = ParseType(raw.type),
 
-                moves = ConvertMoves(raw.moves)
+                moves = ConvertMoves(raw.moves),
+
+                // Map the newly added fields!
+                ability = raw.ability != null ? new Ability { name = raw.ability.name, description = raw.ability.description } : null,
+                weakness = raw.weakness != null ? new Weakness { type = ParseType(raw.weakness.type), value = raw.weakness.value } : null
             };
 
             result.Add(card);
@@ -82,6 +119,8 @@ public class CardGameManager : MonoBehaviour
 
     private CardCategory ParseCategory(string value)
     {
+        if (string.IsNullOrEmpty(value)) return CardCategory.Pokemon;
+
         return value.ToLower() switch
         {
             "pokemon" => CardCategory.Pokemon,
@@ -94,6 +133,8 @@ public class CardGameManager : MonoBehaviour
 
     private PokemonStage ParseStage(string value)
     {
+        if (string.IsNullOrEmpty(value)) return PokemonStage.Basic;
+
         return value.ToLower() switch
         {
             "basic" => PokemonStage.Basic,
@@ -105,16 +146,21 @@ public class CardGameManager : MonoBehaviour
 
     private PokemonType ParseType(string value)
     {
+        if (string.IsNullOrEmpty(value)) return PokemonType.Incolora;
+
         return value.ToLower() switch
         {
-            "grass" => PokemonType.Planta,
-            "fire" => PokemonType.Fuego,
-            "water" => PokemonType.Agua,
-            "electric" => PokemonType.Rayo,
-            "psychic" => PokemonType.Psiquico,
-            "fighting" => PokemonType.Lucha,
-            "dark" => PokemonType.Oscuro,
-            "metal" => PokemonType.Metalico,
+            "planta" => PokemonType.Planta,
+            "fuego" => PokemonType.Fuego,
+            "agua" => PokemonType.Agua,
+            "rayo" => PokemonType.Rayo,
+            "psíquico" => PokemonType.Psiquico,
+            "psiquico" => PokemonType.Psiquico,
+            "lucha" => PokemonType.Lucha,
+            "oscuro" => PokemonType.Oscuro,
+            "metálico" => PokemonType.Metalico,
+            "metalico" => PokemonType.Metalico,
+            "dragón" => PokemonType.Dragon,
             "dragon" => PokemonType.Dragon,
             _ => PokemonType.Incolora
         };
