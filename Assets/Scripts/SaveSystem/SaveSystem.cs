@@ -1,3 +1,5 @@
+using NUnit.Framework;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -29,4 +31,19 @@ public static class SaveSystem
         }
     }
 
+    public static List<TCGPDeck> LoadAllDecks()
+    {
+        string path = Application.persistentDataPath;
+        string[] files = Directory.GetFiles(path, "*.json");
+
+        List<TCGPDeck> decks = new List<TCGPDeck>();
+
+        foreach(string file in files)
+        {
+            string json = File.ReadAllText(file);
+            decks.Add(JsonUtility.FromJson<TCGPDeck>(json));
+        }
+
+        return decks;
+    }
 }
