@@ -10,6 +10,8 @@ public class CardGameManager : MonoBehaviour
     private DeckBuilder deckBuilder;
     private InputAction interactiveKey;
 
+    [SerializeField]
+    private DeckPreferences deckPreferences;
     // Es buena práctica exponer el singleton mediante una propiedad pública si planeas accederlo desde otros scripts.
     public static CardGameManager Instance => _instance;
 
@@ -28,9 +30,7 @@ public class CardGameManager : MonoBehaviour
         }
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    private List<TCGPCard> pool = new List<TCGPCard>();
-    private DeckBuilder deckBuilder;
-    private InputAction interactiveKey;
+  
 
     [SerializeField]
     private DeckPreferences prefs;
@@ -42,48 +42,16 @@ public class CardGameManager : MonoBehaviour
 
     }
 
-        // Intentar encontrar la acción si el InputActionAsset existe en InputSystem
-        if (InputSystem.actions != null)
-        {
-            Debug.Log("Se esta creando el mazo");
-            CreateDeck();
-        }
-    }
+    
 
     public List<TCGPCard> CreateDeck()
     {
-        currentDeck = deckBuilder.BuildDeck(pool, 20);
-
         Debug.Log($"Mazo creado con {currentDeck.Count} cartas.");
         // Llamada ajustada al método que implementamos en DeckBuilder, usando pool y un targetSize
-        var miMazo = deckBuilder.BuildDeck(pool, 20);
-        return miMazo;
+        var miMazo = deckBuilder.BuildDeck(pool, 20, deckPreferences);
         Debug.Log($"Mazo creado con {miMazo.Count} cartas.");
-    }
-
-    private void LoadCards(string jsonFileName)
-    {
-        // 1. Cargamos el archivo JSON desde la carpeta Resources de Unity
-        // Es necesario que el json esté dentro de una carpeta llamada "Resources" (ej: Assets/Resources/cards_data.json)
-        TextAsset jsonTextFile = Resources.Load<TextAsset>(jsonFileName);
-
-        if (jsonTextFile != null)
-        {
-            // Unity JsonUtility requiere que los arrays JSON estén envueltos en un objeto.
-            // Formato esperado de tu JSON: { "cards": [ { "id": 1, ... }, { "id": 2, ... } ] }
-            CardDatabase database = JsonUtility.FromJson<CardDatabase>(jsonTextFile.text);
-
-            if (database != null && database.cards != null)
-            interactiveKey = InputSystem.actions.FindAction("Interact");
-            if (interactiveKey == null)
-            {
-                Debug.LogWarning("No se encontró la acción 'Interact' en InputSystem.actions. Asegúrate de tenerla configurada.");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("InputSystem.actions es null. Asegúrate de tener un InputActionAsset activo en tu proyecto.");
-        }
+        return miMazo;
+        
     }
 
     private void Update()
@@ -98,19 +66,6 @@ public class CardGameManager : MonoBehaviour
         {
             CreateDeck();
         }
-    }
-
-    public List<TCGPCard> CreateDeck()
-    {
-        
-
-        var deck = deckBuilder.BuildDeck(pool, 20, prefs);
-        Debug.Log($"Mazo creado: {deck.Count} cartas");
-
-        foreach( var card in deck )
-            Debug.Log($"Carta: {card.name}");
-
-        return deck;
     }
 
     private void LoadCards(string jsonFileName)

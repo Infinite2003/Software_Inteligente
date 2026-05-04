@@ -12,6 +12,6 @@ public class CardUI : MonoBehaviour
     {
         nombreTexto.text = carta.name;
         hpTexto.text = "HP: " + carta.hp;
-        tipoTexto.text = carta.type;
+        tipoTexto.text = carta.type.ToString();
     }
 }
