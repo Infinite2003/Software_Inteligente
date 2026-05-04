@@ -10,6 +10,9 @@ public class CardGameManager : MonoBehaviour
     private DeckBuilder deckBuilder;
     private InputAction interactiveKey;
 
+    //Accesible desde cualquier script
+    public List<TCGPCard> miMazo;
+
     [SerializeField]
     private DeckPreferences deckPreferences;
     // Es buena práctica exponer el singleton mediante una propiedad pública si planeas accederlo desde otros scripts.
@@ -38,19 +41,22 @@ public class CardGameManager : MonoBehaviour
     {
         deckBuilder = new DeckBuilder();
         LoadCards("tcg_pocket_card_unity");
-
-
     }
 
-    
-
-    public List<TCGPCard> CreateDeck()
+    public void CreateDeck()
     {
         Debug.Log($"Mazo creado con {currentDeck.Count} cartas.");
         // Llamada ajustada al método que implementamos en DeckBuilder, usando pool y un targetSize
-        var miMazo = deckBuilder.BuildDeck(pool, 20, deckPreferences);
+        if(miMazo != null)
+        {
+            foreach (var card in miMazo)
+            {
+                miMazo.Remove(card);
+            }
+            
+        }
+        miMazo = deckBuilder.BuildDeck(pool, 20, deckPreferences);
         Debug.Log($"Mazo creado con {miMazo.Count} cartas.");
-        return miMazo;
         
     }
 
