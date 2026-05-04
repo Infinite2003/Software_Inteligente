@@ -51,6 +51,12 @@ public class CardGameManager : MonoBehaviour
     {
         // Llamada ajustada al método que implementamos en DeckBuilder, usando pool y un targetSize
         var miMazo = deckBuilder.BuildDeck(pool, 20);
+        TCGPDeck newDeck = new TCGPDeck();
+
+        newDeck.name = "Nuevo mazo";
+        foreach(TCGPCard card in miMazo)
+            newDeck.cardIDs.Add(card.id);
+
         Debug.Log($"Mazo creado con {miMazo.Count} cartas.");
     }
 
