@@ -13,4 +13,20 @@ public static class SaveSystem
         Debug.Log("Deck saved successfully.");
     }
 
+    public static TCGPDeck LoadDeck()
+    {
+        if (PlayerPrefs.HasKey("SavedDeck"))
+        {
+            string json = PlayerPrefs.GetString("SavedDeck");
+            TCGPDeck deck = JsonUtility.FromJson<TCGPDeck>(json);
+            Debug.Log("Deck loaded successfully.");
+            return deck;
+        }
+        else
+        {
+            Debug.LogWarning("No saved deck found.");
+            return null;
+        }
+    }
+
 }
