@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
-public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     private Vector3 escalaOriginal;
     private bool estaSobreLaCarta = false;
@@ -22,16 +23,27 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
     {
         // SOLO reacciona si está en la mano o ya en el tablero
         if (!EstaEnMano() && !estaEnTablero) return;
-
         estaSobreLaCarta = true;
+
+        var layout = transform.parent.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+        if (layout != null)
+        {
+            layout.enabled = false;
+        }
         transform.SetAsLastSibling();
-        transform.localScale = escalaOriginal * 1.1f;
+        transform.localScale = escalaOriginal * 1.2f;
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         estaSobreLaCarta = false;
         transform.localScale = escalaOriginal;
+
+        var layout = transform.parent.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+        if (layout != null)
+        {
+            layout.enabled = true;
+        }
     }
 
     // 2. Al hacer clic, la carta sube al centro (CartaJugada)
@@ -39,18 +51,21 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
     {
         if (EstaEnMano())
         {
-            // Buscamos el contenedor por nombre exacto
             GameObject zonaJuego = GameObject.Find("CartaJugada");
 
             if (zonaJuego != null)
             {
-                // 1. Cambiamos el padre
+                // NUEVA VALIDACIÓN: Si el contenedor ya tiene al menos 1 hijo, no hacemos nada
+                if (zonaJuego.transform.childCount > 0)
+                {
+                    Debug.LogWarning("La zona 'CartaJugada' ya está ocupada por otra carta.");
+                    return; // Salimos de la función y la carta no se mueve
+                }
+
+                // Si llegamos aquí, es que está vacío
                 transform.SetParent(zonaJuego.transform);
 
-                // 2. IMPORTANTE: Resetear el RectTransform manualmente
                 RectTransform rect = GetComponent<RectTransform>();
-
-                // Esto obliga a la carta a ir al centro exacto del nuevo padre
                 rect.anchorMin = new Vector2(0.5f, 0.5f);
                 rect.anchorMax = new Vector2(0.5f, 0.5f);
                 rect.pivot = new Vector2(0.5f, 0.5f);
@@ -63,21 +78,20 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
             }
             else
             {
-                Debug.LogError("No se encontró el objeto 'CartaJugada'. Revisa el nombre en la jerarquía.");
+                Debug.LogError("No se encontró 'CartaJugada'");
             }
         }
     }
 
     void Update()
     {
-        // 3. Solo si la carta está en el centro y presionas Y, se va al cementerio
-        if (estaEnTablero && estaSobreLaCarta && Input.GetKeyDown(KeyCode.Y))
+        if (estaEnTablero && estaSobreLaCarta && Keyboard.current.yKey.wasPressedThisFrame)
         {
             GameObject cementerio = GameObject.Find("Cementerio");
             if (cementerio != null)
             {
                 MoverAContenedor(cementerio.transform);
-                estaEnTablero = false; // Ya no está en el tablero, está descartada
+                estaEnTablero = false;
                 Debug.Log("Carta enviada al cementerio");
             }
         }
