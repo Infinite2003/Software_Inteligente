@@ -174,8 +174,8 @@ public class DeckBuilder
         if (SynergyScore(card, deck) == 0)
             score -= 3f;
 
-        // bonus si tiene habilidad
-        if (card.ability != null && !string.IsNullOrEmpty(card.ability.name))
+        // bonus si tiene habilidad (ahora es una lista)
+        if (card.ability != null && card.ability.Count > 0)
             score += 4f;
 
         return score;
@@ -216,7 +216,7 @@ public class DeckBuilder
         foreach (var card in deck)
         {
             // tipo
-            if (card.type == candidate.type)
+            if (card.type == candidate.type && card.category == CardCategory.Pokemon && candidate.category == CardCategory.Pokemon)
                 score += 2f;
 
             // evolución básica → stage
@@ -226,11 +226,22 @@ public class DeckBuilder
                 score += 3f;
             }
 
-            // habilidad + texto relacionado
-            if (card.ability != null && candidate.description != null)
+            // debilidad cruzada (Cubre la debilidad del otro)
+            if (card.weakness != null && candidate.type == card.weakness.type) {
+                score += 1.5f; 
+            }
+
+            // habilidad + texto relacionado (Ahora iterando entre las múltiples habilidades si las tiene)
+            if (card.ability != null && card.ability.Count > 0 && candidate.description != null)
             {
                 if (candidate.description.Contains(card.name, StringComparison.OrdinalIgnoreCase))
                     score += 5f;
+            }
+
+            // Sinergia de Entrenadores (Si el efecto del candidato menciona al Pokémon actual en el mazo)
+            if (!string.IsNullOrEmpty(candidate.effect) && candidate.effect.Contains(card.name, StringComparison.OrdinalIgnoreCase))
+            {
+                score += 5f;
             }
         }
 

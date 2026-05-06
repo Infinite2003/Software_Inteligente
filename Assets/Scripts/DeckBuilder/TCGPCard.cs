@@ -16,9 +16,10 @@ public class TCGPCard
     public int retreat_cost;
 
     public string description;
+    public string effect; // Añadido para los efectos únicos de los Entrenadores.
 
-    public Weakness weakness; // Debilidad que cubrimos en DeckBuilder pero faltaba declarar en TCGPCard
-    public Ability ability;   // Habilidad que evaluamos en combos pero faltaba declarar en TCGPCard
+    public Weakness weakness; 
+    public List<Ability> ability; // Pasado de 'Ability' individual a 'List<Ability>' porque el JSON envía un array
 
     public List<Move> moves;
 }
@@ -41,6 +42,7 @@ public class Weakness
 [System.Serializable]
 public class Ability
 {
+    public string type;   // Añadido (ej. "Habilidad")
     public string name;
-    public string description;
+    public string effect; // Cambiado de 'description' a 'effect' según tu JSON (ej. de Butterfree)
 }

@@ -34,9 +34,6 @@ public class CardGameManager : MonoBehaviour
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
   
-
-    [SerializeField]
-    private DeckPreferences prefs;
     void Start()
     {
         deckBuilder = new DeckBuilder();
@@ -66,11 +63,35 @@ public class CardGameManager : MonoBehaviour
         if (interactiveKey != null && interactiveKey.WasReleasedThisFrame())
         {
             CreateDeck();
+            foreach (var card in miMazo)
+            {
+                Debug.Log($"Carta en el mazo: {card.name}");
+            }
         }
         // Fallback rápido con teclado tradicional para que no te estanques si InputSystem no está configurado
         else if (Keyboard.current != null && Keyboard.current.spaceKey.wasReleasedThisFrame)
         {
             CreateDeck();
+            foreach (var card in miMazo)
+            {
+                Debug.Log($"Carta en el mazo: {card.name}");
+            }
+        }
+        else if (Keyboard.current != null && Keyboard.current.enterKey.wasReleasedThisFrame)
+        {
+            // Busca una carta en el 'pool' (toda la base de datos descargada del JSON)
+            TCGPCard kogaCard = pool.Find(c => c.name.Equals("Koga", System.StringComparison.OrdinalIgnoreCase));
+
+            if (kogaCard != null)
+            {
+                Debug.Log($"Carta encontrada con Éxito: {kogaCard.name}");
+                Debug.Log($"   | Categoría: {kogaCard.category}");
+                Debug.Log($"   | Texto Efecto/Descripción: {(string.IsNullOrEmpty(kogaCard.effect) ? kogaCard.description : kogaCard.effect)}");
+            }
+            else
+            {
+                Debug.LogWarning("No se encontró la carta 'Koga' en la base de datos (Pool). Asegúrate de que el JSON la tenga.");
+            }
         }
     }
 
@@ -97,22 +118,42 @@ public class CardGameManager : MonoBehaviour
                 hp = raw.hp,
                 retreat_cost = raw.retreat_cost,
                 description = raw.description,
+                effect = raw.effect, // Mapeado el efecto del trainer
 
                 category = ParseCategory(raw.category),
-                sub_category = ParseStage(raw.sub_category),
+
+                // Mapear Stage, tu JSON muestra la key "stage" en vez de sub_category
+                sub_category = ParseStage(string.IsNullOrEmpty(raw.stage) ? raw.sub_category : raw.stage),
+
                 type = ParseType(raw.type),
 
                 moves = ConvertMoves(raw.moves),
 
-                // Map the newly added fields!
-                ability = raw.ability != null ? new Ability { name = raw.ability.name, description = raw.ability.description } : null,
-                weakness = raw.weakness != null ? new Weakness { type = ParseType(raw.weakness.type), value = raw.weakness.value } : null
+                weakness = raw.weakness != null ? new Weakness { type = ParseType(raw.weakness.type), value = raw.weakness.value } : null,
+                ability = ConvertAbilities(raw.ability)
             };
 
             result.Add(card);
         }
 
         return result;
+    }
+
+    private List<Ability> ConvertAbilities(List<AbilityRaw> rawAbilities)
+    {
+        List<Ability> abilities = new List<Ability>();
+        if (rawAbilities == null) return abilities;
+
+        foreach (var ab in rawAbilities)
+        {
+            abilities.Add(new Ability
+            {
+                type = ab.type,
+                name = ab.name,
+                effect = ab.effect
+            });
+        }
+        return abilities;
     }
 
     private List<Move> ConvertMoves(List<MoveRaw> rawMoves)

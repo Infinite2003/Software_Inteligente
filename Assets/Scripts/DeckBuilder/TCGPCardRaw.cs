@@ -5,18 +5,18 @@ using System.Collections.Generic;
 public class TCGPCardRaw
 {
     public string id;
-    public string set_number;
     public string name;
     public string category;
     public string sub_category;
+    public string stage;
     public int hp;
     public int retreat_cost;
-    public string rarity;
     public string type;
     public WeaknessRaw weakness;
     public string description;
+    public string effect;
     public List<MoveRaw> moves;
-    public AbilityRaw ability;
+    public List<AbilityRaw> ability;
 }
 
 [Serializable]
@@ -37,6 +37,7 @@ public class WeaknessRaw
 [Serializable]
 public class AbilityRaw
 {
+    public string type;
     public string name;
-    public string description;
+    public string effect;
 }
