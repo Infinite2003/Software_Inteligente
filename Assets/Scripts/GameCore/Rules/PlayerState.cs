@@ -18,7 +18,7 @@ public class PlayerState : MonoBehaviour
     public void Setup()
     {
 
-
+        ShuffleDeck();
     }
 
 
@@ -32,6 +32,41 @@ public class PlayerState : MonoBehaviour
 
             hand.Add(deck[0]);
             deck.RemoveAt(0);
+        }
+    }
+
+    public void ShuffleDeck()
+    {
+
+        for(int i = 0; i < deck.Count; i++)
+        {
+
+            TCGPCard temp = deck[i];
+            int rand = Random.Range(i, deck.Count);
+            deck[i] = deck[rand];
+            deck[rand] = temp;
+        }
+    }
+
+    public void GenerateEnergy()
+    {
+
+        energyThisTurn++;
+    }
+
+    public void SetActiveBasic()
+    {
+
+        foreach(var card in hand)
+        {
+
+            if(card.category =="Pokemon" && card.sub_category == "Basic")
+            {
+
+                active = new PokemonInstance(card);
+                hand.Remove(card);
+                return;
+            }
         }
     }
 }
