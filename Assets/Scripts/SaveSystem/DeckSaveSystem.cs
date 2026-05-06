@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-public static class SaveSystem
+public static class DeckSaveSystem
 {
     public static void SaveDeck(TCGPDeck deck)
     {
