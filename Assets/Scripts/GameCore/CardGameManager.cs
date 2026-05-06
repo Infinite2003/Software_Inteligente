@@ -4,9 +4,36 @@ using UnityEngine.InputSystem;
 
 public class CardGameManager : MonoBehaviour
 {
-    private List<TCGPCard> pool = new List<TCGPCard>();
+    public List<TCGPCard> currentDeck;
+    public static CardGameManager _instance;
+    private List <TCGPCard> pool = new List<TCGPCard>();
     private DeckBuilder deckBuilder;
     private InputAction interactiveKey;
+
+    //Accesible desde cualquier script
+    public List<TCGPCard> miMazo;
+
+    [SerializeField]
+    private DeckPreferences deckPreferences;
+    // Es buena práctica exponer el singleton mediante una propiedad pública si planeas accederlo desde otros scripts.
+    public static CardGameManager Instance => _instance;
+
+    private void Awake()
+    {
+        if(_instance == null)
+        {  
+            _instance = this; 
+            // Opcional: si quieres que el Game Manager persista entre escenas.
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (_instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+    }
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+  
 
     [SerializeField]
     private DeckPreferences prefs;
@@ -14,20 +41,23 @@ public class CardGameManager : MonoBehaviour
     {
         deckBuilder = new DeckBuilder();
         LoadCards("tcg_pocket_card_unity");
+    }
 
-        // Intentar encontrar la acción si el InputActionAsset existe en InputSystem
-        if (InputSystem.actions != null)
+    public void CreateDeck()
+    {
+        Debug.Log($"Mazo creado con {currentDeck.Count} cartas.");
+        // Llamada ajustada al método que implementamos en DeckBuilder, usando pool y un targetSize
+        if(miMazo != null)
         {
-            interactiveKey = InputSystem.actions.FindAction("Interact");
-            if (interactiveKey == null)
+            foreach (var card in miMazo)
             {
-                Debug.LogWarning("No se encontró la acción 'Interact' en InputSystem.actions. Asegúrate de tenerla configurada.");
+                miMazo.Remove(card);
             }
+            
         }
-        else
-        {
-            Debug.LogWarning("InputSystem.actions es null. Asegúrate de tener un InputActionAsset activo en tu proyecto.");
-        }
+        miMazo = deckBuilder.BuildDeck(pool, 20, deckPreferences);
+        Debug.Log($"Mazo creado con {miMazo.Count} cartas.");
+        
     }
 
     private void Update()
@@ -42,19 +72,6 @@ public class CardGameManager : MonoBehaviour
         {
             CreateDeck();
         }
-    }
-
-    public List<TCGPCard> CreateDeck()
-    {
-        
-
-        var deck = deckBuilder.BuildDeck(pool, 20, prefs);
-        Debug.Log($"Mazo creado: {deck.Count} cartas");
-
-        foreach( var card in deck )
-            Debug.Log($"Carta: {card.name}");
-
-        return deck;
     }
 
     private void LoadCards(string jsonFileName)
