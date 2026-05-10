@@ -148,7 +148,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92483ddddac234c49890733d286b6cc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneMaganer
-  sceneToLoad: 
 --- !u!4 &20227619
 Transform:
   m_ObjectHideFlags: 0
@@ -281,7 +280,7 @@ GameObject:
   - component: {fileID: 321111530}
   - component: {fileID: 321111529}
   m_Layer: 5
-  m_Name: DeckList
+  m_Name: VerMazo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -493,7 +492,7 @@ GameObject:
   - component: {fileID: 573592843}
   - component: {fileID: 573592842}
   m_Layer: 5
-  m_Name: StartButton
+  m_Name: PlayBooton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -572,7 +571,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: BoardTest
+          m_StringArgument: Play
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &573592843
@@ -1024,6 +1023,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1354310378}
   m_CullTransparentMesh: 1
+--- !u!1 &1441607339
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1441607341}
+  - component: {fileID: 1441607340}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1441607340
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1441607339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7c9c3e654957da42983c871e23fcaab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CardGameManager
+--- !u!4 &1441607341
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1441607339}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -12.83182, y: -1.99988, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1739240655
 GameObject:
   m_ObjectHideFlags: 0
@@ -1169,3 +1212,4 @@ SceneRoots:
   - {fileID: 207843321}
   - {fileID: 382883549}
   - {fileID: 20227619}
+  - {fileID: 1441607341}
