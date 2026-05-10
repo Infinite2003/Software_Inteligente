@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 
 [System.Serializable]
-public class PlayerState : MonoBehaviour
+public class PlayerState 
 {
 
     public List<TCGPCard> deck = new List<TCGPCard>();
@@ -48,12 +48,6 @@ public class PlayerState : MonoBehaviour
         }
     }
 
-    public void GenerateEnergy()
-    {
-
-        energyThisTurn++;
-    }
-
     public void SetActiveBasic()
     {
 
@@ -68,5 +62,59 @@ public class PlayerState : MonoBehaviour
                 return;
             }
         }
+    }
+
+    public bool AddToBench(TCGPCard card)
+    {
+
+        if(bench.Count >= 3)
+            return false;
+
+        if (card.category != "Pokemon")
+            return false;
+
+        if (card.sub_category != "Basic")
+            return false;
+
+        PokemonInstance pokemon = new PokemonInstance(card);
+
+        bench.Add(pokemon);
+
+        hand.Remove(card);
+
+        return true;
+    }
+
+    public bool AttachEnergy(PokemonInstance target)
+    {
+
+        if (energyThisTurn <= 0)
+            return false;
+
+        target.attachedEnergy++;
+
+        energyThisTurn--;
+
+        return true;
+    }
+
+    public bool Retreat(int benchIndex)
+    {
+
+        if (benchIndex >= bench.Count)
+            return false;
+
+        if (active.attachedEnergy < active.data.retreat_cost)
+            return false;
+
+        active.attachedEnergy -= active.data.retreat_cost;
+
+        PokemonInstance temp = active;
+
+        active = bench[benchIndex];
+
+        bench[benchIndex] = temp;
+
+        return true;
     }
 }
