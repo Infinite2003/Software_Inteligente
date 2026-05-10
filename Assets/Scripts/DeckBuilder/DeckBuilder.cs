@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor.Rendering;
+using UnityEngine;
 
 public class DeckBuilder
 {
@@ -51,10 +52,18 @@ public class DeckBuilder
         return currentDeck;
     }
 
+    private bool IsTrainerCard(TCGPCard card)
+    {
+        return card.category == CardCategory.Trainer || 
+               card.category == CardCategory.Supporter || 
+               card.category == CardCategory.Item;
+    }
+
     private List<TCGPCard> SelectCoreCards(List<TCGPCard> pool)
     {
         List<TCGPCard> core = new List<TCGPCard>();
 
+        // 1. Añadimos primero hasta 2 Pokémons Básicos (motor inicial)
         foreach (var card in pool)
         {
             if (card.category == CardCategory.Pokemon &&
@@ -63,8 +72,40 @@ public class DeckBuilder
             {
                 core.Add(card);
 
-                if (core.Count >= 3)
+                if (core.Count >= 2) 
                     break;
+            }
+        }
+
+        // 2. Obligamos a que la 3ra carta fundacional sea un Trainer (Preferiblemente Supporter de robo)
+        bool trainerFound = false;
+        foreach (var card in pool)
+        {
+            if (IsTrainerCard(card))
+            {
+                if (card.effect != null && (card.effect.Contains("draw", StringComparison.OrdinalIgnoreCase) || card.effect.Contains("roba", StringComparison.OrdinalIgnoreCase)))
+                {
+                    core.Add(card);
+                    trainerFound = true;
+                    break; 
+                }
+            }
+        }
+
+        // 3. Fallback (Issue 2 fix: No meter duplicado si el paso 2 ya lo encontró)
+        if (!trainerFound && core.Count < 3)
+        {
+            foreach (var card in pool)
+            {
+                if (IsTrainerCard(card))
+                {
+                    // Valida que no intentemos meter la misma carta base 2 veces en el motor
+                    if (!core.Exists(c => c.name == card.name))
+                    {
+                        core.Add(card);
+                        break;
+                    }
+                }
             }
         }
 
@@ -82,8 +123,10 @@ public class DeckBuilder
         score += CalculateBaseValue(candidate) * 0.5f;
 
         // 2. ESTRATEGIA (principal)
-        score += EvaluateByPlaystyle(candidate, deck) * 2.5f;
-        score += SupportNeedScore(candidate, deck) * 2f;
+        score += EvaluateByPlaystyle(candidate, deck) * 1.5f; // Bajado de 2.5f a 1.5f para no asfixiar a los Trainers
+
+        // Multiplicador general gigantezado para forzar matemáticamente los trainers debido a que Playstyle daba puntos altisimos
+        score += SupportNeedScore(candidate, deck) * 15f; 
 
         // 3. Ajustes secundarios
         score += SynergyScore(candidate, deck) * 1.5f;
@@ -135,7 +178,7 @@ public class DeckBuilder
         }
         if (card.category != CardCategory.Pokemon)
         {
-            if (card.description != null && card.description.Contains("draw"))
+            if (card.effect != null && card.effect.Contains("draw", StringComparison.OrdinalIgnoreCase))
                 score += 5f;
         }
 
@@ -146,14 +189,22 @@ public class DeckBuilder
     {
         float score = 0f;
 
-        if (!string.IsNullOrEmpty(card.description))
+        // Leer de Ability (si es Pokemon), Effect (Si es Trainer) o Description
+        string desc = string.Empty;
+        if (!string.IsNullOrEmpty(card.effect)) desc += card.effect.ToLower() + " ";
+        if (!string.IsNullOrEmpty(card.description)) desc += card.description.ToLower() + " ";
+        if (card.ability != null)
         {
-            string desc = card.description.ToLower();
+            foreach(var ab in card.ability)
+                if (!string.IsNullOrEmpty(ab.effect)) desc += ab.effect.ToLower() + " ";
+        }
 
-            if (desc.Contains("discard")) score += 6f;
-            if (desc.Contains("draw")) score += 4f;
-            if (desc.Contains("heal")) score += 4f;
-            if (desc.Contains("switch")) score += 3f;
+        if (!string.IsNullOrEmpty(desc))
+        {
+            if (desc.Contains("discard") || desc.Contains("descarta")) score += 6f;
+            if (desc.Contains("draw") || desc.Contains("roba")) score += 4f;
+            if (desc.Contains("heal") || desc.Contains("cura")) score += 4f;
+            if (desc.Contains("switch") || desc.Contains("cambia")) score += 3f;
         }
 
         // premiar resistencia
@@ -232,14 +283,19 @@ public class DeckBuilder
             }
 
             // habilidad + texto relacionado (Ahora iterando entre las múltiples habilidades si las tiene)
-            if (card.ability != null && card.ability.Count > 0 && candidate.description != null)
+            if (candidate.ability != null && candidate.ability.Count > 0 && !string.IsNullOrEmpty(card.name))
             {
-                if (candidate.description.Contains(card.name, StringComparison.OrdinalIgnoreCase))
-                    score += 5f;
+                foreach(var ab in candidate.ability)
+                {
+                    if(!string.IsNullOrEmpty(ab.effect) && ab.effect.Contains(card.name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        score += 5f;
+                    }
+                }
             }
 
             // Sinergia de Entrenadores (Si el efecto del candidato menciona al Pokémon actual en el mazo)
-            if (!string.IsNullOrEmpty(candidate.effect) && candidate.effect.Contains(card.name, StringComparison.OrdinalIgnoreCase))
+            if (candidate.category != CardCategory.Pokemon && !string.IsNullOrEmpty(candidate.effect) && candidate.effect.Contains(card.name, StringComparison.OrdinalIgnoreCase))
             {
                 score += 5f;
             }
@@ -250,17 +306,19 @@ public class DeckBuilder
 
     private float ConsistencyScore(TCGPCard card)
     {
-        if (card.category == CardCategory.Supporter || card.category == CardCategory.Item)
+        if (IsTrainerCard(card))
         {
-            if (string.IsNullOrEmpty(card.description)) return 0f;
+            // Usamos 'effect' ya que así viene de tu JSON para Entrenadores
+            if (string.IsNullOrEmpty(card.effect)) return 0f;
 
-            string desc = card.description.ToLower();
+            string desc = card.effect.ToLower();
             float score = 0f;
 
-            if (desc.Contains("draw")) score += 6f;
-            if (desc.Contains("search")) score += 6f;
-            if (desc.Contains("deck")) score += 4f;
-            if (desc.Contains("energy")) score += 3f;
+            // Busca palabras clave sin importar el idioma (ej: "roba" vs "draw")
+            if (desc.Contains("draw") || desc.Contains("roba")) score += 6f;
+            if (desc.Contains("search") || desc.Contains("busca")) score += 6f;
+            if (desc.Contains("deck") || desc.Contains("mazo")) score += 4f;
+            if (desc.Contains("energy") || desc.Contains("energía")) score += 3f;
 
             return score;
         }
@@ -270,13 +328,22 @@ public class DeckBuilder
 
     private float ResourceBalanceScore(TCGPCard candidate, List<TCGPCard> deck)
     {
-        int pokemon = deck.FindAll(c => c.category == CardCategory.Pokemon).Count;
-        int trainer = deck.Count - pokemon;
+        int pokemonCount = deck.FindAll(c => c.category == CardCategory.Pokemon).Count;
+        int trainerCount = deck.Count - pokemonCount;
+
+        // ESTRICTA RESPONSABILIDAD: SOLO Muros de Cristal.
+        // Nada de dar puntos positivos aquí. Eso lo hace SupportNeed. Solo penalizar duro si traspasa roles.
 
         if (candidate.category == CardCategory.Pokemon)
-            return pokemon > 12 ? -5f : 2f;
-        else
-            return trainer > 8 ? -5f : 2f;
+        {
+            if (pokemonCount >= 14) return -50f; // Techo duro para Pokemons
+        }
+        else 
+        {
+            if (trainerCount >= 10) return -50f; // Techo duro para Trainers
+        }
+
+        return 0f;
     }
 
     private float CurveScore(TCGPCard card)
@@ -308,19 +375,24 @@ public class DeckBuilder
         int trainer = deck.Count - pokemon;
 
         float score = 0f;
+        int currentSize = deck.Count;
 
-        // Si hay pocos trainers → premiar fuerte
-        if (trainer < 5)
+        // Evaluación dinámica y urgente basada en el déficit actual de Trainers.
+        if (currentSize > 0)
         {
-            if (candidate.category != CardCategory.Pokemon)
-                score += 15f;
-        }
+            float targetTrainerRatio = 0.40f; 
+            float currentTrainerRatio = (float)trainer / currentSize;
 
-        // Si hay demasiados pokemon → castigar
-        if (pokemon > 12)
-        {
-            if (candidate.category == CardCategory.Pokemon)
-                score -= 10f;
+            if (currentTrainerRatio < targetTrainerRatio && candidate.category != CardCategory.Pokemon)
+            {
+                float deficit = targetTrainerRatio - currentTrainerRatio;
+
+                // INVERSIÓN DEL MULTIPLICADOR (Issue 1)
+                // Hacemos que de un bonus MASIVO cuando la lista está escasa de Trainers
+                float urgencyFactor = Mathf.Max(1f, 1f + (20f - currentSize) / 5f); // Escala la urgencia inversamente al tamaño actual mucho mas agresiva
+
+                score += deficit * 150f * urgencyFactor; 
+            }
         }
 
         return score;
