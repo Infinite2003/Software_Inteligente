@@ -4,6 +4,8 @@ using UnityEngine.InputSystem;
 
 public class CardGameManager : MonoBehaviour
 {
+    private Dictionary<string, TCGPCard> cardDatabase;
+
     public List<TCGPCard> currentDeck;
     public static CardGameManager _instance;
     private List <TCGPCard> pool = new List<TCGPCard>();
@@ -81,6 +83,14 @@ public class CardGameManager : MonoBehaviour
         CardDatabaseRaw db = JsonUtility.FromJson<CardDatabaseRaw>(json.text);
 
         pool = ConvertToGameCards(db.cards);
+
+        cardDatabase = new Dictionary<string, TCGPCard>();
+
+        foreach (var card in pool)
+        {
+            cardDatabase[card.id] = card;
+        }
+
         Debug.Log($"Se cargaron {pool.Count} cartas desde {jsonFileName}");
     }
 

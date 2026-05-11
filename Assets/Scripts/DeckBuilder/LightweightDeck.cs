@@ -1,10 +1,12 @@
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class TCGPDeck
+public class LightweightDeck
 {
     public string name;
-    public List<TCGPCard> cards;
+
+    public List<String> cardIDs;
 }

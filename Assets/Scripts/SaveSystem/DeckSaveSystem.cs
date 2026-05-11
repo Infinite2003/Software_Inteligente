@@ -5,43 +5,51 @@ using UnityEngine;
 
 public static class DeckSaveSystem
 {
-    public static void SaveDeck(TCGPDeck deck)
-    {
-        string json = JsonUtility.ToJson(deck, true);
-        string path = Path.Combine(Application.persistentDataPath, deck.name + "json");
+    private static string DeckFolder => Path.Combine(Application.persistentDataPath, "Decks");
 
-        PlayerPrefs.SetString("SavedDeck", json);
-        PlayerPrefs.Save();
-        Debug.Log("Deck saved successfully.");
+    public static void SaveDeck(LightweightDeck deck)
+    {
+        Directory.CreateDirectory(DeckFolder);
+
+        string json = JsonUtility.ToJson(deck, true);
+        string path = Path.Combine(DeckFolder, deck.name + "json");
+
+        File.WriteAllText(path, json);
+        
+        Debug.Log("Deck saved to: " + path);
     }
 
-    public static TCGPDeck LoadDeck()
+    public static LightweightDeck LoadDeck(string deckName)
     {
-        if (PlayerPrefs.HasKey("SavedDeck"))
+        string path = Path.Combine(DeckFolder, deckName +  ".json");
+        if (File.Exists(path))
         {
-            string json = PlayerPrefs.GetString("SavedDeck");
-            TCGPDeck deck = JsonUtility.FromJson<TCGPDeck>(json);
-            Debug.Log("Deck loaded successfully.");
+            string json = File.ReadAllText(path);
+            LightweightDeck deck = JsonUtility.FromJson<LightweightDeck>(json);
+
+            Debug.Log("Deck loaded successfully");
+
             return deck;
         }
-        else
-        {
-            Debug.LogWarning("No saved deck found.");
-            return null;
-        }
+
+        Debug.LogWarning("Deck not found");
+
+        return null;
     }
 
-    public static List<TCGPDeck> LoadAllDecks()
+    public static List<LightweightDeck> LoadAllDecks()
     {
-        string path = Application.persistentDataPath;
-        string[] files = Directory.GetFiles(path, "*.json");
+        Directory.CreateDirectory(DeckFolder);
 
-        List<TCGPDeck> decks = new List<TCGPDeck>();
+        string[] files = Directory.GetFiles(DeckFolder, "*.json");
+        List<LightweightDeck> decks = new List<LightweightDeck>();
 
         foreach(string file in files)
         {
             string json = File.ReadAllText(file);
-            decks.Add(JsonUtility.FromJson<TCGPDeck>(json));
+            LightweightDeck deck = JsonUtility.FromJson<LightweightDeck>(json);
+
+            decks.Add(deck);
         }
 
         return decks;

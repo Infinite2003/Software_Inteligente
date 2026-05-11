@@ -4,27 +4,27 @@ using UnityEngine;
 
 public class DeckListManager : MonoBehaviour
 {
-    public TCGPDeck selectedDeck;
-    public List<TCGPDeck> deckList;
+    public List<LightweightDeck> deckList;
 
     private void Start()
     {
         deckList = DeckSaveSystem.LoadAllDecks();
     }
 
-    public void SaveDeck(TCGPDeck delectedDeck)
+    public void SaveDeck(string deckName)
     {
-        if (selectedDeck != null && !inDeckList(selectedDeck))
-            DeckSaveSystem.SaveDeck(selectedDeck);
+        LightweightDeck saveDeck = new LightweightDeck();
+
+        saveDeck.name = "MyDeck";
+        saveDeck.cardIDs = new List<string>();
+
+        foreach (var card in CardGameManager._instance.miMazo)
+        {
+            saveDeck.cardIDs.Add(card.id);
+        }
+
+        DeckSaveSystem.SaveDeck(saveDeck);
     }
 
-    public bool inDeckList(TCGPDeck delectedDeck)
-    {
-        foreach(TCGPDeck deck in deckList)
-        {
-            if(deck ==  delectedDeck)
-                return true;
-        }
-        return false;
-    }
+    
 }
