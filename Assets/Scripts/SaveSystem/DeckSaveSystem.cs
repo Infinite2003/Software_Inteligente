@@ -12,29 +12,11 @@ public static class DeckSaveSystem
         Directory.CreateDirectory(DeckFolder);
 
         string json = JsonUtility.ToJson(deck, true);
-        string path = Path.Combine(DeckFolder, deck.name + "json");
+        string path = Path.Combine(DeckFolder, deck.name + ".json");
 
         File.WriteAllText(path, json);
         
         Debug.Log("Deck saved to: " + path);
-    }
-
-    public static LightweightDeck LoadDeck(string deckName)
-    {
-        string path = Path.Combine(DeckFolder, deckName +  ".json");
-        if (File.Exists(path))
-        {
-            string json = File.ReadAllText(path);
-            LightweightDeck deck = JsonUtility.FromJson<LightweightDeck>(json);
-
-            Debug.Log("Deck loaded successfully");
-
-            return deck;
-        }
-
-        Debug.LogWarning("Deck not found");
-
-        return null;
     }
 
     public static List<LightweightDeck> LoadAllDecks()

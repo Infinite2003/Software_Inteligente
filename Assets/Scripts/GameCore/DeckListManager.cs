@@ -7,7 +7,9 @@ public class DeckListManager : MonoBehaviour
 {
     public List<LightweightDeck> lightweightDecks;
     public List<TCGPDeck> deckList;
+
     [SerializeField] private TMP_InputField deckNameInput;
+    [SerializeField] private GameObject deckGenerationWindow;
 
     private void Start()
     {
@@ -39,6 +41,18 @@ public class DeckListManager : MonoBehaviour
         }
 
         return deck;
+    }
+
+    public void GenerateDeck()
+    {
+        CardGameManager._instance.CreateDeck();
+
+        deckGenerationWindow.SetActive(true);
+    }
+
+    public void CloseGeneratedDeckWindow()
+    {
+        deckGenerationWindow.SetActive(false);
     }
 
     public void SaveCurrentDeck()

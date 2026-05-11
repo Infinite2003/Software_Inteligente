@@ -1,5 +1,3 @@
-using NUnit.Framework;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,5 +6,5 @@ public class LightweightDeck
 {
     public string name;
 
-    public List<String> cardIDs;
+    public List<string> cardIDs;
 }
