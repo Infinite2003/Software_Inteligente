@@ -54,7 +54,7 @@ public class PlayerState
         foreach(var card in hand)
         {
 
-            if(card.category =="Pokemon" && card.sub_category == "Basic")
+            if(card.category == CardCategory.Pokemon && card.sub_category == PokemonStage.Basic)
             {
 
                 active = new PokemonInstance(card);
@@ -70,10 +70,10 @@ public class PlayerState
         if(bench.Count >= 3)
             return false;
 
-        if (card.category != "Pokemon")
+        if (card.category != CardCategory.Pokemon)
             return false;
 
-        if (card.sub_category != "Basic")
+        if (card.sub_category != PokemonStage.Basic)
             return false;
 
         PokemonInstance pokemon = new PokemonInstance(card);

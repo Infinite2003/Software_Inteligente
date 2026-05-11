@@ -8,11 +8,8 @@ public class AttackSystem
 
         int requiredEnergy = 0;
 
-        foreach(var cost in move.costs)
-        {
-
-            requiredEnergy += cost.amount;
-        }
+        if (move.cost != null)
+            requiredEnergy = move.cost.Count;
 
         return attacker.attachedEnergy >= requiredEnergy;
     }
@@ -32,7 +29,7 @@ public class AttackSystem
         int.TryParse(move.damage, out damage);
 
 
-        if (target.data.weakness == attacker.data.type)
+        if (target.data.weakness != null && target.data.weakness.type == attacker.data.type)
             damage += 20;
 
         target.TakeDamage(damage);
