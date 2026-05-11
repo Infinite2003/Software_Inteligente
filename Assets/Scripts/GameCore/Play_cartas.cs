@@ -24,6 +24,10 @@ public class Play_cartas : MonoBehaviour
             miMazo.RemoveAt(0);
             mano.Add(carta);
         }
+        if(CardGameManager._instance.miMazo!=null)
+        {
+            var currentDeck = CardGameManager._instance.miMazo;
+        }
     }
 
     void MostrarMano()
