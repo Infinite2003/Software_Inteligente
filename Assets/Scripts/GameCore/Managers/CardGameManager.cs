@@ -258,6 +258,16 @@ public class CardGameManager : MonoBehaviour
             _ => PokemonType.Incolora
         };
     }
+    
+    public List<TCGPCard> GetMyDeck()
+    {
+        if(miMazo == null || miMazo.Count == 0)
+        {
+            Debug.LogWarning("El mazo está vacío o no ha sido creado aún. Asegúrate de llamar a CreateDeck() antes de obtener el mazo.");
+            return null;
+        }
+        return miMazo;
+    }
 }
 
 [System.Serializable]
