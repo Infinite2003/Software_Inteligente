@@ -76,7 +76,7 @@ public class GeneradorMazo : MonoBehaviour
     void Update()
     {
         // Ejemplo: Presiona Espacio para sacar 5 cartas
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Keyboard.current.oKey.wasPressedThisFrame)
         {
             RobarCartas(5);
         }
