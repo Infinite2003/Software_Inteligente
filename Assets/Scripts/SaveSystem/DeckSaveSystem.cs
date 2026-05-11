@@ -54,4 +54,22 @@ public static class DeckSaveSystem
 
         return decks;
     }
+
+    public static string GetUniqueDeckName(string baseName)
+    {
+        string folder = DeckFolder; 
+
+        Directory.CreateDirectory(folder);
+        string finalName = baseName;
+
+        int counter = 1;
+
+        while (File.Exists(Path.Combine(folder, finalName + ".json")))
+        {
+            finalName = $"{baseName} ({counter})";
+            counter++;
+        }
+
+        return finalName;
+    }
 }
