@@ -10,7 +10,7 @@ public class CardGameManager : MonoBehaviour
     public static CardGameManager _instance;
     private List <TCGPCard> pool = new List<TCGPCard>();
     private DeckBuilder deckBuilder;
-    private InputAction interactiveKey;
+    public InputAction interactiveKey;
 
     //Accesible desde cualquier script
     public List<TCGPCard> miMazo;
@@ -33,12 +33,15 @@ public class CardGameManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
+        // Habilitar la acción del Input System si fue asignada desde el inspector
+        if (interactiveKey != null)
+        {
+            interactiveKey.Enable();
+        }
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
   
-
-    [SerializeField]
-    private DeckPreferences prefs;
     void Start()
     {
         deckBuilder = new DeckBuilder();
@@ -47,32 +50,60 @@ public class CardGameManager : MonoBehaviour
 
     public void CreateDeck()
     {
-        Debug.Log($"Mazo creado con {currentDeck.Count} cartas.");
         // Llamada ajustada al método que implementamos en DeckBuilder, usando pool y un targetSize
         if(miMazo != null)
         {
-            foreach (var card in miMazo)
-            {
-                miMazo.Remove(card);
-            }
-            
+            miMazo.Clear();
         }
+
         miMazo = deckBuilder.BuildDeck(pool, 20, deckPreferences);
         Debug.Log($"Mazo creado con {miMazo.Count} cartas.");
-        
+
     }
 
     private void Update()
     {
-        // Revisamos que interactiveKey no sea null antes de invocarlo para no romper el juego.
-        if (interactiveKey != null && interactiveKey.WasReleasedThisFrame())
+        // Revisamos que interactiveKey no sea null y esté activa antes de invocarla.
+        if (interactiveKey != null && interactiveKey.triggered)
         {
             CreateDeck();
+            foreach (var card in miMazo)
+            {
+                Debug.Log($"Carta en el mazo: {card.name}");
+            }
         }
         // Fallback rápido con teclado tradicional para que no te estanques si InputSystem no está configurado
         else if (Keyboard.current != null && Keyboard.current.spaceKey.wasReleasedThisFrame)
         {
             CreateDeck();
+            foreach (var card in miMazo)
+            {
+                Debug.Log($"Carta en el mazo: {card.name}");
+            }
+        }
+        else if (Keyboard.current != null && Keyboard.current.enterKey.wasReleasedThisFrame)
+        {
+            // Busca una carta en el 'pool' (toda la base de datos descargada del JSON)
+            TCGPCard kogaCard = pool.Find(c => c.name.Equals("Koga", System.StringComparison.OrdinalIgnoreCase));
+
+            if (kogaCard != null)
+            {
+                Debug.Log($"Carta encontrada con Éxito: {kogaCard.name}");
+                Debug.Log($"   | Categoría: {kogaCard.category}");
+                Debug.Log($"   | Texto Efecto/Descripción: {(string.IsNullOrEmpty(kogaCard.effect) ? kogaCard.description : kogaCard.effect)}");
+            }
+            else
+            {
+                Debug.LogWarning("No se encontró la carta 'Koga' en la base de datos (Pool). Asegúrate de que el JSON la tenga.");
+            }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (interactiveKey != null)
+        {
+            interactiveKey.Disable();
         }
     }
 
@@ -80,7 +111,19 @@ public class CardGameManager : MonoBehaviour
     {
         TextAsset json = Resources.Load<TextAsset>(jsonFileName);
 
+        if (json == null)
+        {
+            Debug.LogError($"Error: No se encontró el archivo JSON '{jsonFileName}' en la carpeta Resources.");
+            return;
+        }
+
         CardDatabaseRaw db = JsonUtility.FromJson<CardDatabaseRaw>(json.text);
+
+        if (db == null || db.cards == null)
+        {
+            Debug.LogError("Error: El JSON no pudo ser deserializado o no contiene cartas.");
+            return;
+        }
 
         pool = ConvertToGameCards(db.cards);
 
@@ -92,6 +135,7 @@ public class CardGameManager : MonoBehaviour
         }
 
         Debug.Log($"Se cargaron {pool.Count} cartas desde {jsonFileName}");
+        Debug.Log($"Se cargaron exitosamente {pool.Count} cartas desde {jsonFileName}");
     }
 
     private List<TCGPCard> ConvertToGameCards(List<TCGPCardRaw> rawCards)
@@ -107,22 +151,42 @@ public class CardGameManager : MonoBehaviour
                 hp = raw.hp,
                 retreat_cost = raw.retreat_cost,
                 description = raw.description,
+                effect = raw.effect, // Mapeado el efecto del trainer
 
                 category = ParseCategory(raw.category),
-                sub_category = ParseStage(raw.sub_category),
+
+                // Mapear Stage, tu JSON muestra la key "stage" en vez de sub_category
+                sub_category = ParseStage(string.IsNullOrEmpty(raw.stage) ? raw.sub_category : raw.stage),
+
                 type = ParseType(raw.type),
 
                 moves = ConvertMoves(raw.moves),
 
-                // Map the newly added fields!
-                ability = raw.ability != null ? new Ability { name = raw.ability.name, description = raw.ability.description } : null,
-                weakness = raw.weakness != null ? new Weakness { type = ParseType(raw.weakness.type), value = raw.weakness.value } : null
+                weakness = raw.weakness != null ? new Weakness { type = ParseType(raw.weakness.type), value = raw.weakness.value } : null,
+                ability = ConvertAbilities(raw.ability)
             };
 
             result.Add(card);
         }
 
         return result;
+    }
+
+    private List<Ability> ConvertAbilities(List<AbilityRaw> rawAbilities)
+    {
+        List<Ability> abilities = new List<Ability>();
+        if (rawAbilities == null) return abilities;
+
+        foreach (var ab in rawAbilities)
+        {
+            abilities.Add(new Ability
+            {
+                type = ab.type,
+                name = ab.name,
+                effect = ab.effect
+            });
+        }
+        return abilities;
     }
 
     private List<Move> ConvertMoves(List<MoveRaw> rawMoves)
@@ -151,7 +215,9 @@ public class CardGameManager : MonoBehaviour
         return value.ToLower() switch
         {
             "pokemon" => CardCategory.Pokemon,
+            "pokémon" => CardCategory.Pokemon,   // ← con tilde
             "trainer" => CardCategory.Trainer,
+            "entrenador" => CardCategory.Trainer,   // ← español
             "item" => CardCategory.Item,
             "supporter" => CardCategory.Supporter,
             _ => CardCategory.Pokemon
