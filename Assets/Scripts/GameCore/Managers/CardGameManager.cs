@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 
 public class CardGameManager : MonoBehaviour
 {
-    private Dictionary<string, TCGPCard> cardDatabase;
+    public Dictionary<string, TCGPCard> cardDatabase;
 
     public List<TCGPCard> currentDeck;
     public static CardGameManager _instance;

@@ -4,11 +4,14 @@ using UnityEngine;
 
 public class DeckListManager : MonoBehaviour
 {
-    public List<LightweightDeck> deckList;
+    public List<LightweightDeck> lightweightDecks;
+    public List<TCGPDeck> deckList;
 
     private void Start()
     {
-        deckList = DeckSaveSystem.LoadAllDecks();
+        lightweightDecks = DeckSaveSystem.LoadAllDecks();
+        deckList = new List<TCGPDeck>();
+        rebuildDecks();
     }
 
     public void SaveDeck(string deckName)
@@ -26,5 +29,28 @@ public class DeckListManager : MonoBehaviour
         DeckSaveSystem.SaveDeck(saveDeck);
     }
 
-    
+    private void rebuildDecks()
+    {
+        foreach(LightweightDeck deck in lightweightDecks)
+        {
+            deckList.Add(BuildRuntimeDecks(deck));
+        }
+    }
+
+    private TCGPDeck BuildRuntimeDecks(LightweightDeck savedDeck)
+    {
+        TCGPDeck deck = new TCGPDeck();
+        deck.name = savedDeck.name;
+        deck.cards = new List<TCGPCard>();
+
+        foreach(string id in savedDeck.cardIDs)
+        {
+            if(CardGameManager._instance.cardDatabase.TryGetValue(id, out TCGPCard card))
+            {
+                deck.cards.Add(card);
+            }
+        }
+
+        return deck;
+    }
 }
