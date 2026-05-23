@@ -16,6 +16,7 @@ public class GeneradorMazo : MonoBehaviour
     public int totalCartasMazo = 20;
 
     private List<GameObject> listaDeCartas = new List<GameObject>();
+    //CardGameManager._instance.miMazo;
 
     [Header("Apariencia")]
     public float desfaseEntreCartas = 0.5f; // Para que se vean un poco amontonadas
@@ -28,15 +29,26 @@ public class GeneradorMazo : MonoBehaviour
 
     void CrearMazoInicial()
     {
+        var miMazoReal = CardGameManager._instance.miMazo;
+
+        // Usamos el conteo real de la lista miMazo
         for (int i = 0; i < totalCartasMazo; i++)
         {
             GameObject nuevaCarta = Instantiate(cartaPrefab, contenedorMazo);
 
-            // Las amontonamos ligeramente
-            RectTransform rect = nuevaCarta.GetComponent<RectTransform>();
-            rect.anchoredPosition = new Vector2(-i * 0.5f, i * 0.5f);
+            // 1. Buscamos el componente visual
+            CartaVisual visual = nuevaCarta.GetComponent<CartaVisual>();
 
-            // Las guardamos en la lista
+            if (visual != null)
+            {
+                // 2. Le pasamos el objeto de datos actual de la lista
+                visual.Configurar(miMazoReal[i]);
+            }
+
+            // Posicionamiento visual en el mazo (amontonadas)
+            RectTransform rect = nuevaCarta.GetComponent<RectTransform>();
+            rect.anchoredPosition = new Vector2(-i * desfaseEntreCartas, i * desfaseEntreCartas);
+
             listaDeCartas.Add(nuevaCarta);
         }
     }
