@@ -81,7 +81,7 @@ public class ControladorTurnos : NetworkBehaviour
             return;
         }
 
-        // --- LÓGICA DE CONTROL DE RONDAS ---
+       
         // Aumentamos el contador global de turnos. Solo el servidor puede editar este valor.
         numeroDeTurnoGlobal.Value += 1;
         Debug.Log($"[Servidor] Avanzando al turno global número: {numeroDeTurnoGlobal.Value}");

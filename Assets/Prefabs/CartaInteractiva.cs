@@ -77,7 +77,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
         return false;
     }
 
-    // NUEVA FUNCIÓN: Detecta si la carta actual es de categoría Trainer (Entrenador)
+    // Detecta si la carta actual es de categoría Trainer (Entrenador)
     bool EsCartaTrainer()
     {
         if (cardUI != null && cardUI.cardData != null)
@@ -177,7 +177,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
         float distanciaABanca = zonaBanca != null ? Vector3.Distance(transform.position, zonaBanca.transform.position) : float.MaxValue;
         float distanciaAApoyo = zonaApoyo != null ? Vector3.Distance(transform.position, zonaApoyo.transform.position) : float.MaxValue;
 
-        // --- FILTRO 1: ¿SE DETECTÓ EN LA ZONA DE APOYO? ---
+        // ¿SE DETECTÓ EN LA ZONA DE APOYO?
         if (distanciaAApoyo <= distanciaDeteccion && distanciaAApoyo < distanciaAActivo && distanciaAApoyo < distanciaABanca)
         {
             if (zonaApoyo != null)
@@ -207,7 +207,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                 return;
             }
         }
-        // --- FILTRO 2: CARTA JUGADA (ACTIVO) ---
+        // CARTA JUGADA (ACTIVO)
         else if (distanciaAActivo < distanciaABanca && distanciaAActivo <= distanciaDeteccion)
         {
             if (zonaCartaJugada != null)
@@ -245,7 +245,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                 }
             }
         }
-        // --- FILTRO 3: LA BANCA ---
+        // LA BANCA
         else if (distanciaABanca <= distanciaDeteccion)
         {
             if (zonaBanca != null)
