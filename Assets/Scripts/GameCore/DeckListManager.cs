@@ -20,6 +20,9 @@ public class DeckListManager : MonoBehaviour
 
     private void rebuildDecks()
     {
+        if(lightweightDecks == null || CardGameManager._instance.cardDatabase == null)
+            return;
+
         foreach(LightweightDeck deck in lightweightDecks)
         {
             deckList.Add(BuildRuntimeDecks(deck));

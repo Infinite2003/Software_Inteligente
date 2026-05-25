@@ -134,7 +134,6 @@ public class CardGameManager : MonoBehaviour
             cardDatabase[card.id] = card;
         }
 
-        Debug.Log($"Se cargaron {pool.Count} cartas desde {jsonFileName}");
         Debug.Log($"Se cargaron exitosamente {pool.Count} cartas desde {jsonFileName}");
     }
 
