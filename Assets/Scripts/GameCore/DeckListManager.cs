@@ -11,6 +11,10 @@ public class DeckListManager : MonoBehaviour
     [SerializeField] private TMP_InputField deckNameInput;
     [SerializeField] private GameObject deckGenerationWindow;
 
+    [SerializeField] private Transform contentParent;
+    [SerializeField] private GameObject cardItemPrefab;
+
+
     private void Start()
     {
         lightweightDecks = DeckSaveSystem.LoadAllDecks();
@@ -51,6 +55,7 @@ public class DeckListManager : MonoBehaviour
         CardGameManager._instance.CreateDeck();
 
         deckGenerationWindow.SetActive(true);
+        PopulateView(CardGameManager._instance.miMazo);
     }
 
     public void CloseGeneratedDeckWindow()
@@ -95,5 +100,21 @@ public class DeckListManager : MonoBehaviour
         }
 
         return fileName;
+    }
+
+    public void PopulateView(List<TCGPCard> cards)
+    {
+        foreach(Transform child in contentParent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        foreach (TCGPCard card in cards)
+        {
+            GameObject obj = Instantiate(cardItemPrefab, contentParent);
+
+            CardUI cardui = obj.GetComponent<CardUI>();
+            cardui.SetData(card);
+        }
     }
 }
