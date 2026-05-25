@@ -25,6 +25,8 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     private static bool yaHuboPokemonActivo = false;
 
+
+    public PokemonInstance pokemonInstance;
     void Start()
     {
         escalaOriginal = transform.localScale;
@@ -232,7 +234,15 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                 if (vieneDeBanca || (vieneDeMano && !yaHuboPokemonActivo))
                 {
                     MoverAContenedor(zonaCartaJugada.transform);
+
+                    if(pokemonInstance == null)
+                    {
+
+                        pokemonInstance = new PokemonInstance(cardUI.cardData);
+                    }
+
                     estaEnTablero = true;
+                    Debug.Log("Pokemon Activo: " + pokemonInstance.data.name);
                     yaHuboPokemonActivo = true;
                     canvasGroup.blocksRaycasts = false;
                     return;
@@ -271,7 +281,15 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                 }
 
                 MoverAContenedor(zonaBanca.transform);
+
+                if(pokemonInstance == null)
+                {
+
+                    pokemonInstance = new PokemonInstance(cardUI.cardData);
+                }
+
                 estaEnTablero = true;
+                Debug.Log("Pokemon enviado a banca: " + pokemonInstance.data.name);
                 return;
             }
         }
