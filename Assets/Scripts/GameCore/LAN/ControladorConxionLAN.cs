@@ -11,7 +11,7 @@ public class ControladorConexionLAN : MonoBehaviour
     [SerializeField] private Button btnHost;
     [SerializeField] private Button btnCliente;
 
-    [Header("Contenedor del Menú a Ocultar")]
+    [Header("Contenedor del Menï¿½ a Ocultar")]
     [SerializeField] private GameObject contenedorMenuBotones;
 
     [Header("Input de IP (Opcional)")]
@@ -21,20 +21,35 @@ public class ControladorConexionLAN : MonoBehaviour
 
     void Start()
     {
-        // [2] Validación de null antes de acceder al Singleton
-        if (NetworkManager.Singleton == null)
+        // Validaciï¿½n de seguridad para obtener el transporte de red correctamente
+        if (NetworkManager.Singleton != null)
         {
-            Debug.LogError("NetworkManager no encontrado en escena.");
-            return;
-        }
+            transporte = NetworkManager.Singleton.GetComponent<UnityTransport>();
 
-        transporte = NetworkManager.Singleton.GetComponent<UnityTransport>();
+            // SUSCRIPCIï¿½N A EVENTOS: Aquï¿½ detectamos las conexiones y desconexiones
+            NetworkManager.Singleton.OnClientConnectedCallback += AlConectarseUnCliente;
+            NetworkManager.Singleton.OnClientDisconnectCallback += AlDesconectarseUnCliente;
+        }
+        else
+        {
+            Debug.LogError("ï¿½No se encontrï¿½ el NetworkManager en la escena!");
+        }
 
         btnHost.onClick.AddListener(IniciarHost);
         btnCliente.onClick.AddListener(IniciarCliente);
 
-        // [4] Suscribimos el callback de fallo de conexión
+        // [4] Suscribimos el callback de fallo de conexiï¿½n
         NetworkManager.Singleton.OnClientDisconnectCallback += OnConexionFallida;
+    }
+
+    private void OnDestroy()
+    {
+        // BUENA PRï¿½CTICA: Nos desuscribimos de los eventos al destruir el objeto para evitar fugas de memoria
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= AlConectarseUnCliente;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= AlDesconectarseUnCliente;
+        }
     }
 
     void IniciarHost()
@@ -45,7 +60,7 @@ public class ControladorConexionLAN : MonoBehaviour
         transporte.ConnectionData.Address = "0.0.0.0";
         NetworkManager.Singleton.StartHost();
         DesactivarMenuUI();
-        Debug.Log("Partida LAN iniciada como HOST.");
+        Debug.Log("Partida LAN iniciada como HOST. Esperando al otro jugador...");
     }
 
     void IniciarCliente()
@@ -60,7 +75,7 @@ public class ControladorConexionLAN : MonoBehaviour
         {
             if (!EsIPValida(ip))
             {
-                Debug.LogWarning($"IP inválida introducida: '{ip}'. Abortando conexión.");
+                Debug.LogWarning($"IP invï¿½lida introducida: '{ip}'. Abortando conexiï¿½n.");
                 return;
             }
             transporte.ConnectionData.Address = ip;
@@ -81,12 +96,12 @@ public class ControladorConexionLAN : MonoBehaviour
         return IPAddress.TryParse(ip, out _);
     }
 
-    // [4] Se dispara si la conexión falla o el host la rechaza
+    // [4] Se dispara si la conexiï¿½n falla o el host la rechaza
     void OnConexionFallida(ulong clientId)
     {
-        Debug.LogWarning("Conexión fallida o rechazada. Volviendo al menú.");
+        Debug.LogWarning("Conexiï¿½n fallida o rechazada. Volviendo al menï¿½.");
 
-        // Reactivamos el menú para que el jugador pueda intentarlo de nuevo
+        // Reactivamos el menï¿½ para que el jugador pueda intentarlo de nuevo
         if (contenedorMenuBotones != null)
             contenedorMenuBotones.SetActive(true);
     }
@@ -102,5 +117,29 @@ public class ControladorConexionLAN : MonoBehaviour
     {
         if (NetworkManager.Singleton != null)
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnConexionFallida;
+    }
+}
+    private void AlConectarseUnCliente(ulong clientId)
+    {
+        // Si el ID conectado coincide con nuestro propio ID local y somos el Host, ignoramos el mensaje
+        // para que no diga "alguien se conectï¿½" cuando tï¿½ mismo inicias la partida.
+        if (NetworkManager.Singleton.IsHost && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            return;
+        }
+
+        // Este mensaje saldrï¿½ en la pantalla del Host cuando el rival entre.
+        // Tambiï¿½n saldrï¿½ en la pantalla del Cliente cuando logre conectar con ï¿½xito.
+        Debug.Log($"ï¿½Se ha conectado un jugador a la partida! ID del Cliente: {clientId}");
+    }
+
+    private void AlDesconectarseUnCliente(ulong clientId)
+    {
+        if (NetworkManager.Singleton.IsHost && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            return; // Ignorar si el Host cierra la partida voluntariamente
+        }
+
+        Debug.Log($"Un jugador se ha desconectado o perdiï¿½ la conexiï¿½n. ID: {clientId}");
     }
 }
