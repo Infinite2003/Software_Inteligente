@@ -829,7 +829,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1521701660}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: GestorVictoriaDerrota, Assembly-CSharp
         m_MethodName: VolverAlMenuPrincipal
         m_Mode: 1
@@ -1881,9 +1881,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1521701656}
-  - component: {fileID: 1521701660}
-  - component: {fileID: 1521701659}
   - component: {fileID: 1521701657}
+  - component: {fileID: 1521701658}
   m_Layer: 5
   m_Name: GameManager
   m_TagString: Untagged
@@ -1898,16 +1897,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1521701655}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1975226304}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -26, y: 0}
+  m_AnchoredPosition: {x: 639.5, y: 374.5}
   m_SizeDelta: {x: 130, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1521701657
@@ -1928,7 +1927,7 @@ MonoBehaviour:
   textoContador: {fileID: 1689005159}
   totalCartasMazo: 20
   desfaseEntreCartas: 0.5
---- !u!114 &1521701659
+--- !u!114 &1521701658
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1937,32 +1936,39 @@ MonoBehaviour:
   m_GameObject: {fileID: 1521701655}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16e242086a3a81e44b31aae0307d9e0f, type: 3}
+  m_Script: {fileID: 11500000, guid: 593a2fe42fa9d37498c96f9a383b6521, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ControladorTurnos
-  ShowTopMostFoldoutHeaderGroup: 1
-  btnPasarTurno: {fileID: 349156410}
-  textoIndicadorTurno: {fileID: 254243544}
---- !u!114 &1521701660
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1521701655}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a6df306f38c0ad459eb6f8b6d3b6eec, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GestorVictoriaDerrota
-  ShowTopMostFoldoutHeaderGroup: 1
-  objetoVictoria: {fileID: 125794316}
-  objetoDerrota: {fileID: 792363554}
-  botonRegresar: {fileID: 313080863}
-  contenedorFichasTablero: {fileID: 1975226308}
-  botonPasarTurno: {fileID: 349156408}
-  zonaCartaJugada: {fileID: 1425103264}
-  zonaBanca: {fileID: 1607934250}
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkManager
+  NetworkManagerExpanded: 0
+  NetworkConfig:
+    ProtocolVersion: 0
+    NetworkTransport: {fileID: 0}
+    PlayerPrefab: {fileID: 0}
+    Prefabs:
+      NetworkPrefabsLists:
+      - {fileID: 11400000, guid: bc3bcd525bca62047aedd9a8c9b435fe, type: 2}
+    TickRate: 30
+    ClientConnectionBufferTimeout: 10
+    ConnectionApproval: 0
+    ConnectionData: 
+    EnableTimeResync: 0
+    TimeResyncInterval: 30
+    EnsureNetworkVariableLengthSafety: 0
+    EnableSceneManagement: 1
+    ForceSamePrefabs: 1
+    RecycleNetworkIds: 1
+    NetworkIdRecycleDelay: 120
+    RpcHashSize: 0
+    LoadSceneTimeOut: 120
+    SpawnTimeout: 10
+    EnableNetworkLogs: 1
+    NetworkTopology: 0
+    UseCMBService: 0
+    AutoSpawnPlayerPrefabClientSide: 1
+    NetworkProfilingMetrics: 1
+    OldPrefabList: []
+  RunInBackground: 1
+  LogLevel: 1
 --- !u!1 &1525705346
 GameObject:
   m_ObjectHideFlags: 0
@@ -2721,7 +2727,6 @@ RectTransform:
   - {fileID: 874527979}
   - {fileID: 1425103264}
   - {fileID: 612396699}
-  - {fileID: 1521701656}
   - {fileID: 954534123}
   - {fileID: 349156409}
   - {fileID: 1911354752}
@@ -2843,3 +2848,4 @@ SceneRoots:
   - {fileID: 119631362}
   - {fileID: 1975226304}
   - {fileID: 1603159790}
+  - {fileID: 1521701656}
