@@ -1883,7 +1883,7 @@ GameObject:
   - component: {fileID: 1521701656}
   - component: {fileID: 1521701660}
   - component: {fileID: 1521701659}
-  - component: {fileID: 1521701657}
+  - component: {fileID: 1521701661}
   m_Layer: 5
   m_Name: GameManager
   m_TagString: Untagged
@@ -1910,24 +1910,6 @@ RectTransform:
   m_AnchoredPosition: {x: -26, y: 0}
   m_SizeDelta: {x: 130, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1521701657
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1521701655}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b407c9b46d20bd24d973dc0bc7355d91, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GeneradorMazo
-  cartaPrefab: {fileID: 7805995527043636860, guid: e780b0153ddb7034fb804b82e28bee84, type: 3}
-  contenedorMazo: {fileID: 2089407678}
-  contenedorMano: {fileID: 1647499170}
-  textoContador: {fileID: 1689005159}
-  totalCartasMazo: 20
-  desfaseEntreCartas: 0.5
 --- !u!114 &1521701659
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1963,6 +1945,31 @@ MonoBehaviour:
   botonPasarTurno: {fileID: 349156408}
   zonaCartaJugada: {fileID: 1425103264}
   zonaBanca: {fileID: 1607934250}
+--- !u!114 &1521701661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1521701655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1239055752
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1525705346
 GameObject:
   m_ObjectHideFlags: 0
@@ -2808,6 +2815,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2089407678}
+  - component: {fileID: 2089407679}
   m_Layer: 5
   m_Name: Mazo
   m_TagString: Untagged
@@ -2835,6 +2843,24 @@ RectTransform:
   m_AnchoredPosition: {x: 349, y: -221}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2089407679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2089407677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b407c9b46d20bd24d973dc0bc7355d91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GeneradorMazo
+  cartaPrefab: {fileID: 7805995527043636860, guid: e780b0153ddb7034fb804b82e28bee84, type: 3}
+  contenedorMazo: {fileID: 2089407678}
+  contenedorMano: {fileID: 1647499170}
+  textoContador: {fileID: 1689005159}
+  totalCartasMazo: 20
+  desfaseEntreCartas: 0.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
