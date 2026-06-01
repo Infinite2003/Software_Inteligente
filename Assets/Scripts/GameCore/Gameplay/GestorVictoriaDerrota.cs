@@ -95,7 +95,7 @@ public class GestorVictoriaDerrota : NetworkBehaviour
         int contador = 0;
         foreach (Transform hijo in contenedor)
         {
-            CardUI cardUI = hijo.GetComponent<CardUI>();
+            CardTablero cardUI = hijo.GetComponent<CardTablero>();
             if (cardUI != null && cardUI.cardData != null)
             {
                 string categoria = cardUI.cardData.category.ToString().Trim();

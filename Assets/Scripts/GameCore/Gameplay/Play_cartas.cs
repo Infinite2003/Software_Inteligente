@@ -36,7 +36,7 @@ public class Play_cartas : MonoBehaviour
         {
             GameObject obj = Instantiate(cardPrefab, manoParent);
 
-            obj.GetComponent<CardUI>().SetData(mano[i]);
+            obj.GetComponent<CardTablero>().SetData(mano[i]);
 
             RectTransform rt = obj.GetComponent<RectTransform>();
 
