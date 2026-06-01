@@ -1052,20 +1052,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7c9c3e654957da42983c871e23fcaab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CardGameManager
-  currentDeck: []
-  interactiveKey:
-    m_Name: 
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: b3f40f14-1f74-4c35-8102-ab96617c090f
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  miMazo: []
-  deckPreferences:
-    preferredType: 0
-    playstyle: 0
 --- !u!4 &1441607341
 Transform:
   m_ObjectHideFlags: 0
