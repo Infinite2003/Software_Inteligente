@@ -11,8 +11,12 @@ public class DeckListManager : MonoBehaviour
     [SerializeField] private TMP_InputField deckNameInput;
     [SerializeField] private GameObject deckGenerationWindow;
 
-    [SerializeField] private Transform contentParent;
+    [SerializeField] private Transform generatedCardContentParent; //Padre de las cartas generadas, que se ven en la ventana que se abre
+    [SerializeField] private Transform cardContentParent; //Padre de las cartas del mazo seleccionado, en la pantalla inicial
+    [SerializeField] private Transform deckContentParent;
+
     [SerializeField] private GameObject cardItemPrefab;
+    [SerializeField] private GameObject deckItemPrefab;
 
 
     private void Start()
@@ -20,11 +24,13 @@ public class DeckListManager : MonoBehaviour
         lightweightDecks = DeckSaveSystem.LoadAllDecks();
         deckList = new List<TCGPDeck>();
         rebuildDecks();
+        PopulateDeckView(deckList, deckContentParent);
     }
 
     private void rebuildDecks()
     {
-        if(lightweightDecks == null || CardGameManager._instance.cardDatabase == null)
+        Debug.Log("Cantidad de mazos guardados: " + lightweightDecks.Count);
+        if (lightweightDecks == null || CardGameManager._instance.cardDatabase == null)
             return;
 
         foreach(LightweightDeck deck in lightweightDecks)
@@ -55,7 +61,7 @@ public class DeckListManager : MonoBehaviour
         CardGameManager._instance.CreateDeck();
 
         deckGenerationWindow.SetActive(true);
-        PopulateView(CardGameManager._instance.miMazo);
+        PopulateCardView(CardGameManager._instance.miMazo, generatedCardContentParent);
     }
 
     public void CloseGeneratedDeckWindow()
@@ -102,7 +108,7 @@ public class DeckListManager : MonoBehaviour
         return fileName;
     }
 
-    public void PopulateView(List<TCGPCard> cards)
+    public void PopulateCardView(List<TCGPCard> cards, Transform contentParent)
     {
         foreach(Transform child in contentParent)
         {
@@ -117,4 +123,27 @@ public class DeckListManager : MonoBehaviour
             cardui.SetData(card);
         }
     }
+
+    public void PopulateDeckView(List<TCGPDeck> decks, Transform contentParent)
+    {
+        foreach (Transform child in contentParent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        foreach (TCGPDeck deck in decks)
+        {
+            GameObject obj = Instantiate(deckItemPrefab, contentParent);
+
+            DeckUI deckui = obj.GetComponent<DeckUI>();
+            deckui.Setup(deck, SelectDeck);
+            
+        }
+    }
+
+    public void SelectDeck(TCGPDeck selectedDeck)
+    {
+        PopulateCardView(selectedDeck.cards, cardContentParent);
+    }
+
 }
