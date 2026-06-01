@@ -19,7 +19,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private Canvas canvasInterno;
     private UnityEngine.UI.GraphicRaycaster raycasterInterno;
 
-    private CardUI cardUI;
+    private CardTablero cardtablero;
 
     [SerializeField] private float distanciaDeteccion = 150f;
 
@@ -29,7 +29,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
     {
         escalaOriginal = transform.localScale;
         rectTransform = GetComponent<RectTransform>();
-        cardUI = GetComponent<CardUI>();
+        cardtablero = GetComponent<CardTablero>();
 
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
@@ -69,9 +69,9 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     bool EsCartaPokemon()
     {
-        if (cardUI != null && cardUI.cardData != null)
+        if (cardtablero != null && cardtablero.cardData != null)
         {
-            string categoria = cardUI.cardData.category.ToString().Trim();
+            string categoria = cardtablero.cardData.category.ToString().Trim();
             return categoria.Equals("Pokemon", System.StringComparison.OrdinalIgnoreCase);
         }
         return false;
@@ -80,9 +80,9 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
     // Detecta si la carta actual es de categoría Trainer (Entrenador)
     bool EsCartaTrainer()
     {
-        if (cardUI != null && cardUI.cardData != null)
+        if (cardtablero != null && cardtablero.cardData != null)
         {
-            string categoria = cardUI.cardData.category.ToString().Trim();
+            string categoria = cardtablero.cardData.category.ToString().Trim();
             return categoria.Equals("Trainer", System.StringComparison.OrdinalIgnoreCase);
         }
         return false;

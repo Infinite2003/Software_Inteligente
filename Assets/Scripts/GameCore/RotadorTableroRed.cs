@@ -29,7 +29,7 @@ public class RotadorTableroRed : NetworkBehaviour
         if (canvasPrincipal != null)
         {
             // Rotamos el Canvas completo 180 grados en el eje Z
-            canvasPrincipal.localRotation = Quaternion.Euler(0, 0, 180);
+            canvasPrincipal.localRotation = Quaternion.Euler(0, 0, 90);
         }
         else
         {

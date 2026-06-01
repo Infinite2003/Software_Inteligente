@@ -50,7 +50,7 @@ public class GeneradorMazo : MonoBehaviour
             GameObject nuevaCarta = Instantiate(cartaPrefab, contenedorMazo);
 
             // 4. Buscamos tu componente CardUI en este clon específico
-            CardUI componenteUI = nuevaCarta.GetComponent<CardUI>();
+            CardTablero componenteUI = nuevaCarta.GetComponent<CardTablero>();
 
             if (componenteUI != null)
             {
@@ -111,7 +111,7 @@ public class GeneradorMazo : MonoBehaviour
             bool tieneBasico = false;
             foreach (GameObject cartaGO in cartasPropuestas)
             {
-                CardUI ui = cartaGO.GetComponent<CardUI>();
+                CardTablero ui = cartaGO.GetComponent<CardTablero>();
 
                 if (ui != null && ui.cardData != null)
                 {

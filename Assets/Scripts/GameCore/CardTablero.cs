@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-public class CardUI : MonoBehaviour
+public class CardTablero : MonoBehaviour
 {
     [Header("Textos de la Carta")]
     [SerializeField] private TextMeshProUGUI nombreTexto;
