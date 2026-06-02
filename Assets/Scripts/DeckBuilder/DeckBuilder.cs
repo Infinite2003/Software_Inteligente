@@ -14,23 +14,36 @@ public class DeckBuilder
         {
             if (card.category == CardCategory.Pokemon)
                 return card.type == preferences.preferredType;
-
             return true;
         });
 
         List<TCGPCard> currentDeck = new List<TCGPCard>();
-
         currentDeck.AddRange(SelectCoreCards(filteredPool));
 
-        List<TCGPCard> availableCards = new List<TCGPCard>(filteredPool);
+        // FIX #1: diccionario de usos disponibles en lugar de lista de referencias
+        Dictionary<string, int> available = BuildAvailablePool(filteredPool);
 
-        while (currentDeck.Count < targetSize && availableCards.Count > 0)
+        // Descontamos lo que ya metió SelectCoreCards
+        foreach (var card in currentDeck)
+        {
+            if (available.ContainsKey(card.name))
+            {
+                available[card.name]--;
+                if (available[card.name] <= 0)
+                    available.Remove(card.name);
+            }
+        }
+
+        while (currentDeck.Count < targetSize && available.Count > 0)
         {
             TCGPCard bestCard = null;
             float bestScore = float.MinValue;
 
-            foreach (var card in availableCards)
+            foreach (var card in filteredPool)
             {
+                if (!available.ContainsKey(card.name))
+                    continue;
+
                 float score = EvaluateCardContribution(card, currentDeck);
 
                 if (score > bestScore)
@@ -43,12 +56,27 @@ public class DeckBuilder
             if (bestCard != null)
             {
                 currentDeck.Add(bestCard);
-                availableCards.Remove(bestCard);
+                available[bestCard.name]--;
+                if (available[bestCard.name] <= 0)
+                    available.Remove(bestCard.name);
             }
             else break;
         }
 
         return currentDeck;
+    }
+
+    private Dictionary<string, int> BuildAvailablePool(List<TCGPCard> pool)
+    {
+        Dictionary<string, int> available = new Dictionary<string, int>();
+
+        foreach (var card in pool)
+        {
+            if (!available.ContainsKey(card.name))
+                available[card.name] = 2;
+        }
+
+        return available;
     }
 
     private bool IsTrainerCard(TCGPCard card)
@@ -270,8 +298,7 @@ public class DeckBuilder
                 score += 2f;
 
             // evolución básica → stage
-            if (card.sub_category == PokemonStage.Basic &&
-                candidate.sub_category != PokemonStage.Basic)
+            if (!string.IsNullOrEmpty(candidate.evolve_from) && candidate.evolve_from.Equals(card.name, StringComparison.OrdinalIgnoreCase))
             {
                 score += 3f;
             }

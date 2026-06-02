@@ -6,6 +6,7 @@ using UnityEngine;
 public class TCGPCard
 {
     public string id;
+    public string set_number;
     public string name;
 
     public CardCategory category;
@@ -15,13 +16,16 @@ public class TCGPCard
     public int hp;
     public int retreat_cost;
 
+    public string rarity;
+    public string evolve_from;
+
     public string description;
-    public string effect; // Añadido para los efectos únicos de los Entrenadores.
+    public string effect;
 
-    public Weakness weakness; 
-    public List<Ability> ability; // Pasado de 'Ability' individual a 'List<Ability>' porque el JSON envía un array
-
+    public Weakness weakness;
+    public List<Ability> ability;
     public List<Move> moves;
+    public List<Pack> packs;
 }
 
 [Serializable]
@@ -30,6 +34,7 @@ public class Move
     public List<string> cost;
     public string name;
     public string damage;
+    public string effect; // Efecto del movimiento (ej: "Cura 30 puntos de daño a este Pokémon.")
 }
 
 [System.Serializable]
@@ -42,7 +47,14 @@ public class Weakness
 [System.Serializable]
 public class Ability
 {
-    public string type;   // Añadido (ej. "Habilidad")
+    public string type;
     public string name;
-    public string effect; // Cambiado de 'description' a 'effect' según tu JSON (ej. de Butterfree)
+    public string effect;
+}
+
+[System.Serializable]
+public class Pack
+{
+    public string id;
+    public string name;
 }

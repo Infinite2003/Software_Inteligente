@@ -8,24 +8,23 @@ public class CardGameManager : MonoBehaviour
 
     public List<TCGPCard> currentDeck;
     public static CardGameManager _instance;
-    private List <TCGPCard> pool = new List<TCGPCard>();
+    private List<TCGPCard> pool = new List<TCGPCard>();
     private DeckBuilder deckBuilder;
     public InputAction interactiveKey;
 
-    //Accesible desde cualquier script
+    // Accesible desde cualquier script
     public List<TCGPCard> miMazo;
 
     [SerializeField]
     private DeckPreferences deckPreferences;
-    // Es buena práctica exponer el singleton mediante una propiedad pública si planeas accederlo desde otros scripts.
+
     public static CardGameManager Instance => _instance;
 
     private void Awake()
     {
-        if(_instance == null)
-        {  
-            _instance = this; 
-            // Opcional: si quieres que el Game Manager persista entre escenas.
+        if (_instance == null)
+        {
+            _instance = this;
             DontDestroyOnLoad(gameObject);
         }
         else if (_instance != this)
@@ -34,14 +33,10 @@ public class CardGameManager : MonoBehaviour
             return;
         }
 
-        // Habilitar la acción del Input System si fue asignada desde el inspector
         if (interactiveKey != null)
-        {
             interactiveKey.Enable();
-        }
     }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-  
+
     void Start()
     {
         deckBuilder = new DeckBuilder();
@@ -50,40 +45,29 @@ public class CardGameManager : MonoBehaviour
 
     public void CreateDeck()
     {
-        // Llamada ajustada al método que implementamos en DeckBuilder, usando pool y un targetSize
-        if(miMazo != null)
-        {
+        if (miMazo != null)
             miMazo.Clear();
-        }
 
         miMazo = deckBuilder.BuildDeck(pool, 20, deckPreferences);
         Debug.Log($"Mazo creado con {miMazo.Count} cartas.");
-
     }
 
     private void Update()
     {
-        // Revisamos que interactiveKey no sea null y esté activa antes de invocarla.
         if (interactiveKey != null && interactiveKey.triggered)
         {
             CreateDeck();
             foreach (var card in miMazo)
-            {
                 Debug.Log($"Carta en el mazo: {card.name}");
-            }
         }
-        // Fallback rápido con teclado tradicional para que no te estanques si InputSystem no está configurado
         else if (Keyboard.current != null && Keyboard.current.spaceKey.wasReleasedThisFrame)
         {
             CreateDeck();
             foreach (var card in miMazo)
-            {
                 Debug.Log($"Carta en el mazo: {card.name}");
-            }
         }
         else if (Keyboard.current != null && Keyboard.current.enterKey.wasReleasedThisFrame)
         {
-            // Busca una carta en el 'pool' (toda la base de datos descargada del JSON)
             TCGPCard kogaCard = pool.Find(c => c.name.Equals("Koga", System.StringComparison.OrdinalIgnoreCase));
 
             if (kogaCard != null)
@@ -102,9 +86,7 @@ public class CardGameManager : MonoBehaviour
     private void OnDestroy()
     {
         if (interactiveKey != null)
-        {
             interactiveKey.Disable();
-        }
     }
 
     private void LoadCards(string jsonFileName)
@@ -130,9 +112,7 @@ public class CardGameManager : MonoBehaviour
         cardDatabase = new Dictionary<string, TCGPCard>();
 
         foreach (var card in pool)
-        {
             cardDatabase[card.id] = card;
-        }
 
         Debug.Log($"Se cargaron exitosamente {pool.Count} cartas desde {jsonFileName}");
     }
@@ -146,23 +126,34 @@ public class CardGameManager : MonoBehaviour
             TCGPCard card = new TCGPCard
             {
                 id = raw.id,
+                set_number = raw.set_number,
                 name = raw.name,
                 hp = raw.hp,
                 retreat_cost = raw.retreat_cost,
                 description = raw.description,
-                effect = raw.effect, // Mapeado el efecto del trainer
+                effect = raw.effect,
+                rarity = raw.rarity,
+                evolve_from = raw.evolve_from,
 
-                category = ParseCategory(raw.category),
+                // FIX 2: ParseCategory recibe trainer_type para mapear Supporter/Item correctamente
+                category = ParseCategory(raw.category, raw.trainer_type),
 
-                // Mapear Stage, tu JSON muestra la key "stage" en vez de sub_category
-                sub_category = ParseStage(string.IsNullOrEmpty(raw.stage) ? raw.sub_category : raw.stage),
+                // FIX 1 & 5: ParseStage directo desde raw.stage (sub_category eliminado del Raw)
+                sub_category = ParseStage(raw.stage),
 
                 type = ParseType(raw.type),
 
+                // FIX 3: ConvertMoves ya mapea move.effect
                 moves = ConvertMoves(raw.moves),
 
-                weakness = raw.weakness != null ? new Weakness { type = ParseType(raw.weakness.type), value = raw.weakness.value } : null,
-                ability = ConvertAbilities(raw.ability)
+                weakness = raw.weakness != null
+                               ? new Weakness { type = ParseType(raw.weakness.type), value = raw.weakness.value }
+                               : null,
+
+                ability = ConvertAbilities(raw.ability),
+
+                // FIX 4: packs ahora se transfieren
+                packs = ConvertPacks(raw.packs)
             };
 
             result.Add(card);
@@ -185,13 +176,13 @@ public class CardGameManager : MonoBehaviour
                 effect = ab.effect
             });
         }
+
         return abilities;
     }
 
     private List<Move> ConvertMoves(List<MoveRaw> rawMoves)
     {
         List<Move> moves = new List<Move>();
-
         if (rawMoves == null) return moves;
 
         foreach (var m in rawMoves)
@@ -200,29 +191,57 @@ public class CardGameManager : MonoBehaviour
             {
                 name = m.name,
                 damage = m.damage,
-                cost = m.cost
+                cost = m.cost,
+                effect = m.effect  // FIX 3: efecto del movimiento mapeado
             });
         }
 
         return moves;
     }
 
-    private CardCategory ParseCategory(string value)
+    private List<Pack> ConvertPacks(List<PackRaw> rawPacks)
     {
-        if (string.IsNullOrEmpty(value)) return CardCategory.Pokemon;
+        List<Pack> packs = new List<Pack>();
+        if (rawPacks == null) return packs;
 
-        return value.ToLower() switch
+        foreach (var p in rawPacks)
         {
-            "pokemon" => CardCategory.Pokemon,
-            "pokémon" => CardCategory.Pokemon,   // ← con tilde
-            "trainer" => CardCategory.Trainer,
-            "entrenador" => CardCategory.Trainer,   // ← español
-            "item" => CardCategory.Item,
-            "supporter" => CardCategory.Supporter,
-            _ => CardCategory.Pokemon
-        };
+            packs.Add(new Pack
+            {
+                id = p.id,
+                name = p.name
+            });
+        }
+
+        return packs;
     }
 
+    // FIX 2: Recibe trainer_type para distinguir Supporter e Item
+    private CardCategory ParseCategory(string category, string trainerType)
+    {
+        if (string.IsNullOrEmpty(category)) return CardCategory.Pokemon;
+
+        string cat = category.ToLower();
+
+        if (cat is "pokemon" or "pokémon")
+            return CardCategory.Pokemon;
+
+        if (cat is "trainer" or "entrenador")
+        {
+            return (trainerType ?? "").ToLower() switch
+            {
+                "item" => CardCategory.Item,
+                "objeto" => CardCategory.Item,
+                "supporter" => CardCategory.Supporter,
+                "partidario" => CardCategory.Supporter,
+                _ => CardCategory.Trainer
+            };
+        }
+
+        return CardCategory.Pokemon;
+    }
+
+    // FIX 1: Maneja los valores en español del JSON
     private PokemonStage ParseStage(string value)
     {
         if (string.IsNullOrEmpty(value)) return PokemonStage.Basic;
@@ -230,8 +249,13 @@ public class CardGameManager : MonoBehaviour
         return value.ToLower() switch
         {
             "basic" => PokemonStage.Basic,
+            "básico" => PokemonStage.Basic,
+            "stage 1" => PokemonStage.Stage1,
             "stage1" => PokemonStage.Stage1,
+            "fase 1" => PokemonStage.Stage1,
+            "stage 2" => PokemonStage.Stage2,
             "stage2" => PokemonStage.Stage2,
+            "fase 2" => PokemonStage.Stage2,
             _ => PokemonStage.Basic
         };
     }
@@ -250,6 +274,7 @@ public class CardGameManager : MonoBehaviour
             "psiquico" => PokemonType.Psiquico,
             "lucha" => PokemonType.Lucha,
             "oscuro" => PokemonType.Oscuro,
+            "oscura" => PokemonType.Oscuro,  // variante femenina que usa el JSON en weakness
             "metálico" => PokemonType.Metalico,
             "metalico" => PokemonType.Metalico,
             "dragón" => PokemonType.Dragon,
@@ -257,10 +282,10 @@ public class CardGameManager : MonoBehaviour
             _ => PokemonType.Incolora
         };
     }
-    
+
     public List<TCGPCard> GetMyDeck()
     {
-        if(miMazo == null || miMazo.Count == 0)
+        if (miMazo == null || miMazo.Count == 0)
         {
             Debug.LogWarning("El mazo está vacío o no ha sido creado aún. Asegúrate de llamar a CreateDeck() antes de obtener el mazo.");
             return null;
