@@ -3329,6 +3329,25 @@ MonoBehaviour:
   deckPreferences:
     preferredType: 0
     playstyle: 0
+    anchorCard:
+      id: 
+      set_number: 
+      name: 
+      category: 0
+      sub_category: 0
+      type: 0
+      hp: 0
+      retreat_cost: 0
+      rarity: 
+      evolve_from: 
+      description: 
+      effect: 
+      weakness:
+        type: 0
+        value: 
+      ability: []
+      moves: []
+      packs: []
 --- !u!4 &1503777112
 Transform:
   m_ObjectHideFlags: 0

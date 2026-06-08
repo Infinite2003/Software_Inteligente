@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -41,6 +42,20 @@ public class CardGameManager : MonoBehaviour
     {
         deckBuilder = new DeckBuilder();
         LoadCards("tcg_pocket_card_unity");
+
+        // Simulación: elegir la primera EX del tipo preferido como anchor
+        List<TCGPCard> exCards = GetEXCardsByType(deckPreferences.preferredType);
+
+        if (exCards != null && exCards.Count > 0)
+        {
+            deckPreferences.anchorCard = exCards[0];
+            Debug.Log($"Anchor seleccionado: {deckPreferences.anchorCard.name}");
+        }
+        else
+        {
+            deckPreferences.anchorCard = null;
+            Debug.LogWarning("No se encontraron cartas EX para el tipo preferido. Se construirá sin anchor.");
+        }
     }
 
     public void CreateDeck()
@@ -291,6 +306,13 @@ public class CardGameManager : MonoBehaviour
             return null;
         }
         return miMazo;
+    }
+    public List<TCGPCard> GetEXCardsByType(PokemonType type)
+    {
+        return pool.FindAll(card =>
+         card.type == type &&
+         !string.IsNullOrEmpty(card.name) &&
+         card.name.EndsWith(" ex", StringComparison.OrdinalIgnoreCase));
     }
 }
 

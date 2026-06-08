@@ -119,7 +119,7 @@ public class DeckListManager : MonoBehaviour
         {
             GameObject obj = Instantiate(cardItemPrefab, contentParent);
 
-            CardTablero cardui = obj.GetComponent<CardTablero>();
+            CardUI cardui = obj.GetComponent<CardUI>();
             cardui.SetData(card);
         }
     }

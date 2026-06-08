@@ -12,9 +12,11 @@ public class DeckBuilder
 
         List<TCGPCard> filteredPool = pool.FindAll(card =>
         {
-            if (card.category == CardCategory.Pokemon)
-                return card.type == preferences.preferredType;
-            return true;
+            // Trainers siempre pasan independientemente del tipo
+            if (card.category != CardCategory.Pokemon) return true;
+
+            // Pokémon solo del tipo preferido
+            return card.type == preferences.preferredType;
         });
 
         List<TCGPCard> currentDeck = new List<TCGPCard>();
@@ -90,48 +92,54 @@ public class DeckBuilder
     {
         List<TCGPCard> core = new List<TCGPCard>();
 
-        // 1. Añadimos primero hasta 2 Pokémons Básicos (motor inicial)
-        foreach (var card in pool)
-        {
-            if (card.category == CardCategory.Pokemon &&
-                card.sub_category == PokemonStage.Basic &&
-                card.type == preferences.preferredType)
-            {
-                core.Add(card);
+        // 1. Hasta 2 Pokémons Básicos — priorizamos los que tienen cadena evolutiva
+        //    (es decir, algún otro Pokémon en el pool tiene evolve_from apuntando a ellos)
+        List<TCGPCard> basics = pool.FindAll(c =>
+            c.category == CardCategory.Pokemon &&
+            c.sub_category == PokemonStage.Basic &&
+            c.type == preferences.preferredType);
 
-                if (core.Count >= 2) 
-                    break;
-            }
+        basics.Sort((a, b) =>
+        {
+            bool aHasEvolution = pool.Exists(c => !string.IsNullOrEmpty(c.evolve_from) &&
+                c.evolve_from.Equals(a.name, StringComparison.OrdinalIgnoreCase));
+            bool bHasEvolution = pool.Exists(c => !string.IsNullOrEmpty(c.evolve_from) &&
+                c.evolve_from.Equals(b.name, StringComparison.OrdinalIgnoreCase));
+
+            return bHasEvolution.CompareTo(aHasEvolution); // primero los que tienen evolución
+        });
+
+        foreach (var card in basics)
+        {
+            if (core.Count >= 2) break;
+            core.Add(card);
         }
 
-        // 2. Obligamos a que la 3ra carta fundacional sea un Trainer (Preferiblemente Supporter de robo)
+        // 2. Trainer con efecto de robo — verificamos que no esté ya en el core
         bool trainerFound = false;
         foreach (var card in pool)
         {
-            if (IsTrainerCard(card))
+            if (IsTrainerCard(card) && !core.Exists(c => c.name == card.name))
             {
-                if (card.effect != null && (card.effect.Contains("draw", StringComparison.OrdinalIgnoreCase) || card.effect.Contains("roba", StringComparison.OrdinalIgnoreCase)))
+                if (card.effect != null && (card.effect.Contains("draw", StringComparison.OrdinalIgnoreCase) ||
+                                            card.effect.Contains("roba", StringComparison.OrdinalIgnoreCase)))
                 {
                     core.Add(card);
                     trainerFound = true;
-                    break; 
+                    break;
                 }
             }
         }
 
-        // 3. Fallback (Issue 2 fix: No meter duplicado si el paso 2 ya lo encontró)
-        if (!trainerFound && core.Count < 3)
+        // 3. Fallback — cualquier Trainer no duplicado
+        if (!trainerFound)
         {
             foreach (var card in pool)
             {
-                if (IsTrainerCard(card))
+                if (IsTrainerCard(card) && !core.Exists(c => c.name == card.name))
                 {
-                    // Valida que no intentemos meter la misma carta base 2 veces en el motor
-                    if (!core.Exists(c => c.name == card.name))
-                    {
-                        core.Add(card);
-                        break;
-                    }
+                    core.Add(card);
+                    break;
                 }
             }
         }
@@ -245,14 +253,11 @@ public class DeckBuilder
     {
         float score = 0f;
 
-        // sinergia fuerte
-        score += SynergyScore(card, deck) * 2f;
+        float synergy = SynergyScore(card, deck);  // una sola llamada
 
-        // penalizar cartas aisladas
-        if (SynergyScore(card, deck) == 0)
-            score -= 3f;
+        score += synergy * 0.5f;                   // bonus leve adicional
+        if (synergy == 0f) score -= 3f;            // penalizar cartas aisladas
 
-        // bonus si tiene habilidad (ahora es una lista)
         if (card.ability != null && card.ability.Count > 0)
             score += 4f;
 
@@ -276,15 +281,43 @@ public class DeckBuilder
                 }
             }
         }
-        else value += 10f;
+        else
+        {
+            // Base según impacto del efecto
+            if (string.IsNullOrEmpty(card.effect))
+            {
+                value += 5f;
+            }
+            else
+            {
+                string e = card.effect.ToLower();
+                if (e.Contains("draw") || e.Contains("roba")) value += 14f;
+                if (e.Contains("search") || e.Contains("busca")) value += 12f;
+                if (e.Contains("heal") || e.Contains("cura")) value += 8f;
+                if (e.Contains("energy") || e.Contains("energía")) value += 8f;
+                if (e.Contains("damage") || e.Contains("daño")) value += 6f;
+                if (value == 0f) value += 5f; // fallback si no matchea nada
+            }
+        }
 
         return value;
     }
 
     private bool IsValid(TCGPCard candidate, List<TCGPCard> deck)
     {
+        // Regla 1: máximo 2 copias
         int count = deck.FindAll(c => c.name == candidate.name).Count;
-        return count < 2;
+        if (count >= 2) return false;
+
+        // Regla 2: un Stage 1 o Stage 2 no puede entrar si su preevolución no está en el mazo
+        if (candidate.category == CardCategory.Pokemon &&
+            !string.IsNullOrEmpty(candidate.evolve_from))
+        {
+            bool prevExists = deck.Exists(c => c.name.Equals(candidate.evolve_from, StringComparison.OrdinalIgnoreCase));
+            if (!prevExists) return false;
+        }
+
+        return true;
     }
 
     private float SynergyScore(TCGPCard candidate, List<TCGPCard> deck)
@@ -357,27 +390,17 @@ public class DeckBuilder
         int pokemonCount = deck.FindAll(c => c.category == CardCategory.Pokemon).Count;
         int trainerCount = deck.Count - pokemonCount;
 
-        // ESTRICTA RESPONSABILIDAD: SOLO Muros de Cristal.
-        // Nada de dar puntos positivos aquí. Eso lo hace SupportNeed. Solo penalizar duro si traspasa roles.
-
-        if (candidate.category == CardCategory.Pokemon)
-        {
-            if (pokemonCount >= 14) return -50f; // Techo duro para Pokemons
-        }
-        else 
-        {
-            if (trainerCount >= 10) return -50f; // Techo duro para Trainers
-        }
+        if (candidate.category == CardCategory.Pokemon && pokemonCount >= 18) return -50f;
+        if (candidate.category != CardCategory.Pokemon && trainerCount >= 18) return -50f;
 
         return 0f;
     }
 
     private float CurveScore(TCGPCard card)
     {
-        if (card.category == CardCategory.Pokemon && card.moves != null)
+        if (card.category == CardCategory.Pokemon && card.moves != null && card.moves.Count > 0)
         {
             float avg = 0f;
-
             foreach (var move in card.moves)
                 avg += move.cost?.Count ?? 0;
 
@@ -392,7 +415,7 @@ public class DeckBuilder
 
     private float RedundancyPenalty(TCGPCard card, List<TCGPCard> deck)
     {
-        return deck.Exists(c => c.name == card.name) ? 5f : 0f;
+        return deck.Exists(c => c.name == card.name) ? 15f : 0f;
     }
 
     private float SupportNeedScore(TCGPCard candidate, List<TCGPCard> deck)
@@ -403,21 +426,16 @@ public class DeckBuilder
         float score = 0f;
         int currentSize = deck.Count;
 
-        // Evaluación dinámica y urgente basada en el déficit actual de Trainers.
         if (currentSize > 0)
         {
-            float targetTrainerRatio = 0.40f; 
+            float targetTrainerRatio = 0.40f;
             float currentTrainerRatio = (float)trainer / currentSize;
 
             if (currentTrainerRatio < targetTrainerRatio && candidate.category != CardCategory.Pokemon)
             {
                 float deficit = targetTrainerRatio - currentTrainerRatio;
-
-                // INVERSIÓN DEL MULTIPLICADOR (Issue 1)
-                // Hacemos que de un bonus MASIVO cuando la lista está escasa de Trainers
-                float urgencyFactor = Mathf.Max(1f, 1f + (20f - currentSize) / 5f); // Escala la urgencia inversamente al tamaño actual mucho mas agresiva
-
-                score += deficit * 150f * urgencyFactor; 
+                float urgencyFactor = Mathf.Clamp(1f + (10f - currentSize) / 10f, 1f, 2f); // antes llegaba a 4.4f+
+                score += deficit * 40f * urgencyFactor; // antes era 150f
             }
         }
 
@@ -430,4 +448,5 @@ public class DeckPreferences
 {
     public PokemonType preferredType;
     public BattleType playstyle;
+    public TCGPCard anchorCard; // opcional, para decks centrados en una carta específica
 }

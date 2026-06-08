@@ -1054,7 +1054,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardGameManager
   currentDeck: []
   interactiveKey:
-    m_Name: 
+    m_Name: Interactive Key
     m_Type: 0
     m_ExpectedControlType: 
     m_Id: 645428f5-1115-4cdb-b9cc-2a25793aaa1e
@@ -1066,6 +1066,25 @@ MonoBehaviour:
   deckPreferences:
     preferredType: 0
     playstyle: 0
+    anchorCard:
+      id: Venusaur EX
+      set_number: 
+      name: 
+      category: 0
+      sub_category: 0
+      type: 0
+      hp: 0
+      retreat_cost: 0
+      rarity: 
+      evolve_from: 
+      description: 
+      effect: 
+      weakness:
+        type: 0
+        value: 
+      ability: []
+      moves: []
+      packs: []
 --- !u!4 &1441607341
 Transform:
   m_ObjectHideFlags: 0
