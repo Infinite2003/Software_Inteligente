@@ -96,6 +96,10 @@ public class DeckListManager : MonoBehaviour
         DeckSaveSystem.SaveDeck(savedDeck);
 
         Debug.Log("Deck saved");
+
+        deckList.Add(BuildRuntimeDecks(savedDeck));
+        PopulateDeckView(deckList, deckContentParent);
+        CloseGeneratedDeckWindow();
     }
 
     private string SanitizeFileName(string fileName)
