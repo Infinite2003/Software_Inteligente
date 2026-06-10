@@ -2018,9 +2018,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1521701656}
+  - component: {fileID: 1521701661}
   - component: {fileID: 1521701660}
   - component: {fileID: 1521701659}
-  - component: {fileID: 1521701661}
   m_Layer: 5
   m_Name: GameManager
   m_TagString: Untagged
@@ -2059,7 +2059,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16e242086a3a81e44b31aae0307d9e0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControladorTurnos
-  ShowTopMostFoldoutHeaderGroup: 1
   btnPasarTurno: {fileID: 349156410}
   textoIndicadorTurno: {fileID: 254243544}
   contadorDeTurnos: {fileID: 535241164}
@@ -2075,7 +2074,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a6df306f38c0ad459eb6f8b6d3b6eec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GestorVictoriaDerrota
-  ShowTopMostFoldoutHeaderGroup: 1
   objetoVictoria: {fileID: 125794316}
   objetoDerrota: {fileID: 792363554}
   botonRegresar: {fileID: 313080863}
@@ -2658,6 +2656,92 @@ RectTransform:
   m_AnchoredPosition: {x: -19, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1760800594
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1760800596}
+  - component: {fileID: 1760800595}
+  - component: {fileID: 1760800598}
+  - component: {fileID: 1760800597}
+  m_Layer: 0
+  m_Name: RedManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1760800595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1760800594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1222426728
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!4 &1760800596
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1760800594}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 593.325, y: 546.96643, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1760800597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1760800594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 309ca5f32dc054342b5cfb4801315a99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RotadorTableroRed
+  ShowTopMostFoldoutHeaderGroup: 1
+  canvasPrincipal: {fileID: 0}
+--- !u!114 &1760800598
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1760800594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 485a072c9e6c30f4bb339ffac0f13c9b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SincronizadorRed
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &1911354748
 GameObject:
   m_ObjectHideFlags: 0
@@ -2771,8 +2855,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1975226304}
-  - component: {fileID: 1975226306}
-  - component: {fileID: 1975226309}
   - component: {fileID: 1975226305}
   - component: {fileID: 1975226303}
   - component: {fileID: 1975226302}
@@ -2894,31 +2976,6 @@ MonoBehaviour:
   btnCliente: {fileID: 1525705347}
   contenedorMenuBotones: {fileID: 954534122}
   inputIP: {fileID: 0}
---- !u!114 &1975226306
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1975226300}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3066878009
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!225 &1975226308
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -2931,20 +2988,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &1975226309
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1975226300}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 309ca5f32dc054342b5cfb4801315a99, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RotadorTableroRed
-  ShowTopMostFoldoutHeaderGroup: 1
-  canvasPrincipal: {fileID: 0}
 --- !u!1 &2089407677
 GameObject:
   m_ObjectHideFlags: 0
@@ -3008,3 +3051,4 @@ SceneRoots:
   - {fileID: 119631362}
   - {fileID: 1975226304}
   - {fileID: 1603159790}
+  - {fileID: 1760800596}

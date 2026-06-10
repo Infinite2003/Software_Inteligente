@@ -91,14 +91,13 @@ public class ControladorConexionLAN : MonoBehaviour
         Debug.Log($"¡Se ha conectado un jugador a la partida! ID del Cliente: {clientId}");
         if (NetworkManager.Singleton.IsHost)
         {
-            ControladorTurnos turnos = Object.FindFirstObjectByType<ControladorTurnos>();
-            if (turnos != null)
+            if (SincronizadorRed.Instancia != null)
             {
-                turnos.IniciarPrimerTurno();
+                SincronizadorRed.Instancia.IniciarPrimerTurno();
             }
             else
             {
-                Debug.LogError("No se encontró ControladorTurnos en la escena al intentar iniciar la partida.");
+                Debug.LogError("SincronizadorRed no encontrado. ¿Existe el objeto RedManager en la escena?");
             }
         }
     }

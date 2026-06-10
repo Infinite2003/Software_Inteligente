@@ -14,7 +14,17 @@ public class RotadorTableroRed : NetworkBehaviour
         // [5] Validamos que el canvas esté asignado antes de cualquier lógica
         if (canvasPrincipal == null)
         {
-            Debug.LogError("Canvas Principal no asignado en RotadorTableroRed.");
+            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+            if (canvas != null)
+            {
+                canvasPrincipal = canvas.GetComponent<RectTransform>();
+                Debug.Log("[RotadorTableroRed] Canvas encontrado automáticamente.");
+            }
+        }
+
+        if (canvasPrincipal == null)
+        {
+            Debug.LogError("[RotadorTableroRed] No se encontró el Canvas en la escena.");
             return;
         }
 

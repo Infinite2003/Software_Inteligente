@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using Unity.Netcode;
 
-public class GestorVictoriaDerrota : NetworkBehaviour
+public class GestorVictoriaDerrota : MonoBehaviour
 {
     [Header("Referencias de UI en Canvas (Objetos Existentes)")]
     [SerializeField] private GameObject objetoVictoria;
@@ -19,9 +18,8 @@ public class GestorVictoriaDerrota : NetworkBehaviour
     [SerializeField] private Transform zonaBanca;
 
     private ControladorTurnos sistemaTurnos;
+    private SincronizadorRed red;
     private bool juegoTerminado = false;
-
-    private NetworkVariable<int> turnosTotalesTranscurridos = new NetworkVariable<int>(0);
     private bool _ultimoEstadoTurno;
 
     void Start()
@@ -32,35 +30,48 @@ public class GestorVictoriaDerrota : NetworkBehaviour
 
         sistemaTurnos = Object.FindFirstObjectByType<ControladorTurnos>();
 
+        StartCoroutine(BucleMonitoreoPartida());
+    }
+
+    private IEnumerator EsperarSincronizador()
+    {
+        yield return new WaitUntil(() => SincronizadorRed.Instancia != null);
+
+        red = SincronizadorRed.Instancia;
+
+        // Escuchamos el evento de que el rival perdió (nos toca mostrar victoria)
+        red.OnRivalPerdio += () => DefinirResultadoLocal(true);
+
         if (sistemaTurnos != null)
             _ultimoEstadoTurno = sistemaTurnos.EsMiTurno();
 
         StartCoroutine(BucleMonitoreoPartida());
     }
 
+    void OnDestroy()
+    {
+        if (red != null)
+            red.OnRivalPerdio -= () => DefinirResultadoLocal(true);
+    }
+
     void Update()
     {
-        if (!IsSpawned || sistemaTurnos == null || juegoTerminado) return;
-        if(!IsServer) return;
+        // Solo el servidor lleva la cuenta de turnos transcurridos
+        if (red == null || sistemaTurnos == null || juegoTerminado) return;
+        if (!red.IsServer) return;
 
         bool turnoActual = sistemaTurnos.EsMiTurno();
         if (turnoActual != _ultimoEstadoTurno)
         {
             _ultimoEstadoTurno = turnoActual;
-
-            turnosTotalesTranscurridos.Value++;
+            red.IncrementarTurnosTranscurridos();
         }
     }
 
-    //[Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    //private void ActualizarTurnoServerRpc()
-    //{
-    //    turnosTotalesTranscurridos.Value++;
-    //}
 
     private IEnumerator BucleMonitoreoPartida()
     {
-        yield return new WaitUntil(() => turnosTotalesTranscurridos.Value >= 2);
+        yield return new WaitUntil(() => red != null && red.TurnosTotales >= 2);
 
         Debug.Log("Fase de preparación terminada. Activando escáner de condiciones de victoria/derrota.");
 
@@ -79,16 +90,14 @@ public class GestorVictoriaDerrota : NetworkBehaviour
         int pokemonEnActivo = ContarPokemonesEnContenedor(zonaCartaJugada);
         int pokemonEnBanca = ContarPokemonesEnContenedor(zonaBanca);
 
-        Debug.Log($"[Verificación] ClientId={NetworkManager.Singleton.LocalClientId} | " +
-             $"Activo={pokemonEnActivo} | Banca={pokemonEnBanca} | " +
-             $"zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name : "NULL")} | " +
-             $"zonaBanca={(zonaBanca != null ? zonaBanca.name : "NULL")} | " +
-             $"turnosTotales={turnosTotalesTranscurridos.Value}");
+        Debug.Log($"[Verificación] ClientId={Unity.Netcode.NetworkManager.Singleton.LocalClientId} | " +
+                  $"Activo={pokemonEnActivo} | Banca={pokemonEnBanca}");
 
         if (pokemonEnActivo == 0 && pokemonEnBanca == 0)
         {
+            Debug.Log("[Derrota] Sin Pokémon en juego.");
             DefinirResultadoLocal(false);
-            NotificarResultadoAlRivalServerRpc();
+            red.NotificarDerrotaServerRpc();
         }
     }
 
@@ -109,21 +118,9 @@ public class GestorVictoriaDerrota : NetworkBehaviour
         return contador;
     }
 
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void NotificarResultadoAlRivalServerRpc()
-    {
-        NotificarResultadoAlRivalClientRpc();
-    }
-
-    [Rpc(SendTo.ClientsAndHost)]
-    private void NotificarResultadoAlRivalClientRpc()
-    {
-        if (NetworkManager.Singleton.LocalClientId != GetComponent<NetworkObject>().OwnerClientId)
-            DefinirResultadoLocal(true);
-    }
-
     public void DefinirResultadoLocal(bool ganeLaPartida)
     {
+        if (juegoTerminado) return;
         juegoTerminado = true;
 
         if (botonRegresar != null) botonRegresar.SetActive(true);
@@ -140,8 +137,10 @@ public class GestorVictoriaDerrota : NetworkBehaviour
 
     public void VolverAlMenuPrincipal()
     {
-        if (NetworkManager.Singleton != null)
-            NetworkManager.Singleton.Shutdown();
+        EstadoTableroLocal.yaHuboPokemonActivo.Clear();
+
+        if (Unity.Netcode.NetworkManager.Singleton != null)
+            Unity.Netcode.NetworkManager.Singleton.Shutdown();
 
         SceneManager.LoadScene("MainMenu");
     }
