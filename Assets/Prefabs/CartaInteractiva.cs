@@ -3,6 +3,11 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using System.Collections; // REQUISITO: Necesario para usar Corrutinas (WaitForSeconds)
 
+public static class EstadoTableroLocal
+{
+    public static System.Collections.Generic.Dictionary<ulong, bool> yaHuboPokemonActivo = new System.Collections.Generic.Dictionary<ulong, bool>();
+}
+
 public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private Vector3 escalaOriginal;
@@ -23,10 +28,8 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     [SerializeField] private float distanciaDeteccion = 150f;
 
-    private static bool yaHuboPokemonActivo = false;
-
-
     public PokemonInstance pokemonInstance;
+
     void Start()
     {
         escalaOriginal = transform.localScale;
@@ -231,7 +234,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                 bool vieneDeBanca = (padreOriginal.name == "Banca");
                 bool vieneDeMano = (padreOriginal.name.Contains("Mano") || padreOriginal.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>() != null);
 
-                if (vieneDeBanca || (vieneDeMano && !yaHuboPokemonActivo))
+                if (vieneDeBanca || (vieneDeMano && !MiYaHuboPokemonActivo()))
                 {
                     MoverAContenedor(zonaCartaJugada.transform);
 
@@ -243,7 +246,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
                     estaEnTablero = true;
                     Debug.Log("Pokemon Activo: " + pokemonInstance.data.name);
-                    yaHuboPokemonActivo = true;
+                    MarcarYaHuboPokemonActivo();
                     canvasGroup.blocksRaycasts = false;
                     return;
                 }
@@ -267,7 +270,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                     return;
                 }
 
-                if (cartaJugadaEstaVacia && !yaHuboPokemonActivo)
+                if (cartaJugadaEstaVacia && !MiYaHuboPokemonActivo())
                 {
                     Debug.LogWarning("Tu primer Pok�mon DEBE ser el Activo en 'CartaJugada'.");
                     RegresarAPadreOriginal();
@@ -389,5 +392,20 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
         rectTransform.localPosition = Vector3.zero;
         rectTransform.localRotation = Quaternion.identity;
         rectTransform.localScale = Vector3.one;
+    }
+
+    // Helper para leer
+    bool MiYaHuboPokemonActivo()
+    {
+        ulong miId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+        return EstadoTableroLocal.yaHuboPokemonActivo.ContainsKey(miId)
+               && EstadoTableroLocal.yaHuboPokemonActivo[miId];
+    }
+
+    // Helper para escribir
+    void MarcarYaHuboPokemonActivo()
+    {
+        ulong miId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+        EstadoTableroLocal.yaHuboPokemonActivo[miId] = true;
     }
 }

@@ -41,24 +41,22 @@ public class GestorVictoriaDerrota : NetworkBehaviour
     void Update()
     {
         if (!IsSpawned || sistemaTurnos == null || juegoTerminado) return;
+        if(!IsServer) return;
 
         bool turnoActual = sistemaTurnos.EsMiTurno();
         if (turnoActual != _ultimoEstadoTurno)
         {
             _ultimoEstadoTurno = turnoActual;
 
-            if (IsServer)
-                turnosTotalesTranscurridos.Value++;
-            else
-                ActualizarTurnoServerRpc();
+            turnosTotalesTranscurridos.Value++;
         }
     }
 
-    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    private void ActualizarTurnoServerRpc()
-    {
-        turnosTotalesTranscurridos.Value++;
-    }
+    //[Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    //private void ActualizarTurnoServerRpc()
+    //{
+    //    turnosTotalesTranscurridos.Value++;
+    //}
 
     private IEnumerator BucleMonitoreoPartida()
     {
@@ -68,8 +66,7 @@ public class GestorVictoriaDerrota : NetworkBehaviour
 
         while (!juegoTerminado)
         {
-            if (IsOwner)
-                VerificarCondicionDeVida();
+            VerificarCondicionDeVida();
 
             yield return new WaitForSeconds(1.0f);
         }
@@ -81,6 +78,12 @@ public class GestorVictoriaDerrota : NetworkBehaviour
 
         int pokemonEnActivo = ContarPokemonesEnContenedor(zonaCartaJugada);
         int pokemonEnBanca = ContarPokemonesEnContenedor(zonaBanca);
+
+        Debug.Log($"[Verificación] ClientId={NetworkManager.Singleton.LocalClientId} | " +
+             $"Activo={pokemonEnActivo} | Banca={pokemonEnBanca} | " +
+             $"zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name : "NULL")} | " +
+             $"zonaBanca={(zonaBanca != null ? zonaBanca.name : "NULL")} | " +
+             $"turnosTotales={turnosTotalesTranscurridos.Value}");
 
         if (pokemonEnActivo == 0 && pokemonEnBanca == 0)
         {
@@ -115,7 +118,7 @@ public class GestorVictoriaDerrota : NetworkBehaviour
     [Rpc(SendTo.ClientsAndHost)]
     private void NotificarResultadoAlRivalClientRpc()
     {
-        if (!IsOwner)
+        if (NetworkManager.Singleton.LocalClientId != GetComponent<NetworkObject>().OwnerClientId)
             DefinirResultadoLocal(true);
     }
 

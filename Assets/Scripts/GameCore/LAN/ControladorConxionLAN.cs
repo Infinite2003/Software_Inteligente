@@ -89,6 +89,18 @@ public class ControladorConexionLAN : MonoBehaviour
             return;
 
         Debug.Log($"¡Se ha conectado un jugador a la partida! ID del Cliente: {clientId}");
+        if (NetworkManager.Singleton.IsHost)
+        {
+            ControladorTurnos turnos = Object.FindFirstObjectByType<ControladorTurnos>();
+            if (turnos != null)
+            {
+                turnos.IniciarPrimerTurno();
+            }
+            else
+            {
+                Debug.LogError("No se encontró ControladorTurnos en la escena al intentar iniciar la partida.");
+            }
+        }
     }
 
     private void AlDesconectarseUnCliente(ulong clientId)

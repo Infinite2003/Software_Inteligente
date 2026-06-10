@@ -14,7 +14,7 @@ public class ControladorTurnos : NetworkBehaviour
 
     // Sincroniza el ID del jugador que tiene el turno actual (ulong)
     private NetworkVariable<ulong> jugadorActualTurno = new NetworkVariable<ulong>(
-        0,
+        ulong.MaxValue, //Valor inicial invalido para controlar bien
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
@@ -22,6 +22,7 @@ public class ControladorTurnos : NetworkBehaviour
     [Header("UI Componentes")]
     [SerializeField] private Button btnPasarTurno;
     [SerializeField] private TextMeshProUGUI textoIndicadorTurno;
+    [SerializeField] private TextMeshProUGUI contadorDeTurnos;
 
     void Start()
     {
@@ -44,6 +45,22 @@ public class ControladorTurnos : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         jugadorActualTurno.OnValueChanged -= AlCambiarElTurno;
+    }
+
+    public void IniciarPrimerTurno()
+    {
+        if (!IsServer) return;
+
+        var clientes = NetworkManager.Singleton.ConnectedClientsIds;
+
+        if(clientes.Count < 2)
+        {
+            Debug.LogWarning("[Servidor] IniciarPrimerTurno llamado con menos de 2 jugadores");
+            return;
+        }
+
+        jugadorActualTurno.Value = clientes[0];
+        Debug.Log($"[Servidor] Partida iniciada. Primer turno asignado al jugador: {clientes[0]}");
     }
 
     // Devuelve 'true' si es el turno de la persona que está mirando esta pantalla
@@ -85,6 +102,7 @@ public class ControladorTurnos : NetworkBehaviour
         // Aumentamos el contador global de turnos. Solo el servidor puede editar este valor.
         numeroDeTurnoGlobal.Value += 1;
         Debug.Log($"[Servidor] Avanzando al turno global número: {numeroDeTurnoGlobal.Value}");
+        if(contadorDeTurnos!=null) contadorDeTurnos.text = "Turno: " + numeroDeTurnoGlobal.Value;
 
 
         // Alternamos el ID entre el Jugador 1 y el Jugador 2
@@ -100,6 +118,12 @@ public class ControladorTurnos : NetworkBehaviour
 
     private void AlCambiarElTurno(ulong turnoAnterior, ulong turnoNuevo)
     {
+        if(turnoAnterior == ulong.MaxValue)
+        {
+            ActualizarInterfazTurno();
+            return; 
+        }
+
         if (EsMiTurno() && !EsPrimerTurno())
         {
             // Buscamos el GeneradorMazo en la escena actual
@@ -120,6 +144,15 @@ public class ControladorTurnos : NetworkBehaviour
 
     private void ActualizarInterfazTurno()
     {
+        if(jugadorActualTurno.Value == ulong.MaxValue)
+        {
+            if (textoIndicadorTurno != null)
+                textoIndicadorTurno.text = "Esperando jugadores...";
+            if (btnPasarTurno != null)
+                btnPasarTurno.interactable = false;
+            return;
+        }
+
         if (EsMiTurno())
         {
             // Modificamos el texto si es su primer turno para darle feedback visual al jugador
