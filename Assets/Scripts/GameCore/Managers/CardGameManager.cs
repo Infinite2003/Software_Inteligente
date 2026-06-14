@@ -17,7 +17,7 @@ public class CardGameManager : MonoBehaviour
     public List<TCGPCard> miMazo;
 
     [SerializeField]
-    private DeckPreferences deckPreferences;
+    public DeckPreferences deckPreferences;
 
     public static CardGameManager Instance => _instance;
 
@@ -123,6 +123,11 @@ public class CardGameManager : MonoBehaviour
         }
 
         pool = ConvertToGameCards(db.cards);
+        foreach (var card in pool)
+        {
+            if (IsTrainerCard(card) && !string.IsNullOrEmpty(card.effect))
+                Debug.Log($"[Trainer] {card.name}: {card.effect}");
+        }
 
         cardDatabase = new Dictionary<string, TCGPCard>();
 
@@ -313,6 +318,13 @@ public class CardGameManager : MonoBehaviour
          card.type == type &&
          !string.IsNullOrEmpty(card.name) &&
          card.name.EndsWith(" ex", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool IsTrainerCard(TCGPCard card)
+    {
+        return card.category == CardCategory.Trainer ||
+               card.category == CardCategory.Supporter ||
+               card.category == CardCategory.Item;
     }
 }
 

@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -18,6 +20,10 @@ public class DeckListManager : MonoBehaviour
     [SerializeField] private GameObject cardItemPrefab;
     [SerializeField] private GameObject deckItemPrefab;
 
+    [SerializeField] private TMP_Dropdown fightStyleDropdown;
+    [SerializeField] private TMP_Dropdown typeDropdown;
+    [SerializeField] private TMP_Dropdown exDropDown;
+
 
     private void Start()
     {
@@ -25,6 +31,23 @@ public class DeckListManager : MonoBehaviour
         deckList = new List<TCGPDeck>();
         rebuildDecks();
         PopulateDeckView(deckList, deckContentParent);
+
+        fightStyleDropdown.onValueChanged.AddListener(OnFightStyleChanged);
+        typeDropdown.onValueChanged.AddListener(OnTypeChanged);
+        exDropDown.onValueChanged.AddListener(OnExChanged);
+
+        fightStyleDropdown.ClearOptions();
+
+        fightStyleDropdown.AddOptions(
+            new System.Collections.Generic.List<string>(
+                Enum.GetNames(typeof(BattleType))));
+
+        typeDropdown.ClearOptions();
+        typeDropdown.AddOptions(
+            new System.Collections.Generic.List<string>(
+                Enum.GetNames(typeof(PokemonType))));
+
+        OnTypeChanged(typeDropdown.value);
     }
 
     private void rebuildDecks()
@@ -33,7 +56,7 @@ public class DeckListManager : MonoBehaviour
         if (lightweightDecks == null || CardGameManager._instance.cardDatabase == null)
             return;
 
-        foreach(LightweightDeck deck in lightweightDecks)
+        foreach (LightweightDeck deck in lightweightDecks)
         {
             deckList.Add(BuildRuntimeDecks(deck));
         }
@@ -45,9 +68,9 @@ public class DeckListManager : MonoBehaviour
         deck.name = savedDeck.name;
         deck.cards = new List<TCGPCard>();
 
-        foreach(string id in savedDeck.cardIDs)
+        foreach (string id in savedDeck.cardIDs)
         {
-            if(CardGameManager._instance.cardDatabase.TryGetValue(id, out TCGPCard card))
+            if (CardGameManager._instance.cardDatabase.TryGetValue(id, out TCGPCard card))
             {
                 deck.cards.Add(card);
             }
@@ -84,11 +107,11 @@ public class DeckListManager : MonoBehaviour
         deckName = DeckSaveSystem.GetUniqueDeckName(deckName);
 
         LightweightDeck savedDeck = new LightweightDeck();
-        
+
         savedDeck.name = deckName;
         savedDeck.cardIDs = new List<string>();
 
-        foreach(var card in CardGameManager._instance.miMazo)
+        foreach (var card in CardGameManager._instance.miMazo)
         {
             savedDeck.cardIDs.Add(card.id);
         }
@@ -104,7 +127,7 @@ public class DeckListManager : MonoBehaviour
 
     private string SanitizeFileName(string fileName)
     {
-        foreach(char c in System.IO.Path.GetInvalidFileNameChars())
+        foreach (char c in System.IO.Path.GetInvalidFileNameChars())
         {
             fileName = fileName.Replace(c, '_');
         }
@@ -114,7 +137,7 @@ public class DeckListManager : MonoBehaviour
 
     public void PopulateCardView(List<TCGPCard> cards, Transform contentParent)
     {
-        foreach(Transform child in contentParent)
+        foreach (Transform child in contentParent)
         {
             Destroy(child.gameObject);
         }
@@ -141,13 +164,71 @@ public class DeckListManager : MonoBehaviour
 
             DeckUI deckui = obj.GetComponent<DeckUI>();
             deckui.Setup(deck, SelectDeck);
-            
+
         }
     }
 
     public void SelectDeck(TCGPDeck selectedDeck)
     {
         PopulateCardView(selectedDeck.cards, cardContentParent);
+    }
+
+    //Seleccion del tipo de juego y carta
+
+    public void OnFightStyleChanged(int index)
+    {
+        BattleType selectedBattleType = (BattleType)index;
+        CardGameManager._instance.deckPreferences.playstyle = selectedBattleType;
+
+        Debug.Log("Battle Type: " + CardGameManager._instance.deckPreferences.playstyle);
+
+    }
+
+    public void OnTypeChanged(int index)
+    {
+        PokemonType selectedType = (PokemonType)index;
+        CardGameManager._instance.deckPreferences.preferredType = selectedType;
+
+        CardGameManager._instance.deckPreferences.anchorCard = null;
+
+        exDropDown.ClearOptions();
+
+        List<TCGPCard> exCards = CardGameManager._instance.GetEXCardsByType(selectedType);
+        exDropDown.AddOptions(exCards.Select(card => card.name).Distinct().ToList());
+        exDropDown.RefreshShownValue();
+
+        if (exCards.Count > 0)
+        {
+            CardGameManager._instance.deckPreferences.anchorCard = exCards[0];
+            Debug.Log("Anchor por defecto: " + exCards[0].name);
+        }
+        else
+        {
+            Debug.LogWarning("No hay cartas EX para el tipo: " + selectedType);
+        }
+
+        Debug.Log("Tipo seleccionado: " + selectedType);
+    }
+
+    public void OnExChanged(int index)
+    {
+        List<TCGPCard> exCards = CardGameManager._instance.GetEXCardsByType((PokemonType)typeDropdown.value);
+        if (exCards == null || exCards.Count == 0)
+        {
+            CardGameManager._instance.deckPreferences.anchorCard = null;
+            Debug.LogWarning("No hay cartas EX disponibles para este tipo.");
+            return;
+        }
+
+        // Obtener la lista única de nombres en el mismo orden del dropdown
+        var distinctNames = exCards.Select(card => card.name).Distinct().ToList();
+        if (index >= distinctNames.Count) return;
+
+        string selectedName = distinctNames[index];
+        // Encontrar la primera carta de la DB que coincida con este nombre
+        CardGameManager._instance.deckPreferences.anchorCard = exCards.FirstOrDefault(c => c.name == selectedName) ?? exCards[0];
+
+        Debug.Log("EX seleccionado: " + CardGameManager._instance.deckPreferences.anchorCard.name);
     }
 
 }
