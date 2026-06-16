@@ -122,6 +122,10 @@ public class DeckListManager : MonoBehaviour
 
         deckList.Add(BuildRuntimeDecks(savedDeck));
         PopulateDeckView(deckList, deckContentParent);
+
+        // Limpiamos la entrada para el próximo mazo
+        deckNameInput.text = "";
+
         CloseGeneratedDeckWindow();
     }
 
@@ -229,6 +233,18 @@ public class DeckListManager : MonoBehaviour
         CardGameManager._instance.deckPreferences.anchorCard = exCards.FirstOrDefault(c => c.name == selectedName) ?? exCards[0];
 
         Debug.Log("EX seleccionado: " + CardGameManager._instance.deckPreferences.anchorCard.name);
+    }
+    public void ClearAllDecks()
+    {
+        DeckSaveSystem.DeleteAllDecks();
+
+        lightweightDecks.Clear();
+        deckList.Clear();
+
+        PopulateDeckView(deckList, deckContentParent);
+        PopulateCardView(new List<TCGPCard>(), cardContentParent);
+
+        Debug.Log("Todos los mazos han sido eliminados.");
     }
 
 }

@@ -54,4 +54,20 @@ public static class DeckSaveSystem
 
         return finalName;
     }
+
+    public static void DeleteAllDecks()
+    {
+        if (!Directory.Exists(DeckFolder))
+        {
+            Debug.LogWarning("No existe la carpeta de mazos.");
+            return;
+        }
+
+        string[] files = Directory.GetFiles(DeckFolder, "*.json");
+
+        foreach (string file in files)
+            File.Delete(file);
+
+        Debug.Log($"Se eliminaron {files.Length} mazos guardados.");
+    }
 }

@@ -36,13 +36,14 @@ public class CardGameManager : MonoBehaviour
 
         if (interactiveKey != null)
             interactiveKey.Enable();
+
+        // Cargamos los datos en Awake() para asegurar que DeckListManager los pueda recuperar en su Start()
+        deckBuilder = new DeckBuilder();
+        LoadCards("tcg_pocket_card_unity");
     }
 
     void Start()
     {
-        deckBuilder = new DeckBuilder();
-        LoadCards("tcg_pocket_card_unity");
-
         // Simulación: elegir la primera EX del tipo preferido como anchor
         List<TCGPCard> exCards = GetEXCardsByType(deckPreferences.preferredType);
 

@@ -48,7 +48,8 @@ public class DeckBuilder
     private List<TCGPCard> ShufflePool(List<TCGPCard> pool, int seed)
     {
         List<TCGPCard> shuffled = new List<TCGPCard>(pool);
-        System.Random rng = new System.Random(seed);
+        // Garantizamos una semilla distinta en cada intento para generar mazos variados
+        System.Random rng = new System.Random(System.Guid.NewGuid().GetHashCode() + seed);
 
         for (int i = shuffled.Count - 1; i > 0; i--)
         {
