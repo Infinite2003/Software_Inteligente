@@ -81,11 +81,16 @@ public class ControladorTurnos : MonoBehaviour
             {
                 Debug.Log("¡Inicio de turno! Robando 1 carta automáticamente.");
                 generadorMazo.RobarCartas(1);
+
             }
             else
             {
                 Debug.LogWarning("No se encontró el GeneradorMazo en la escena para efectuar el robo automático.");
             }
+
+            Gestor_Batalla gestor = Object.FindFirstObjectByType<Gestor_Batalla>();
+            if (gestor != null && EsMiTurno())
+                gestor.AlIniciarTurno();
         }
         ActualizarInterfazTurno();
     }
