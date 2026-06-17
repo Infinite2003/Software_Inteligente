@@ -186,6 +186,8 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
         GameObject zonaBanca = GameObject.Find("Banca");
         GameObject zonaApoyo = GameObject.Find("Apoyo");
 
+        bool cartaJugadaEstaVacia = (zonaCartaJugada != null && zonaCartaJugada.transform.childCount == 0);
+
         // ── Distancias a cada zona ────────────────────────────────────────────
         float distanciaAActivo = zonaCartaJugada != null
             ? Vector3.Distance(transform.position, zonaCartaJugada.transform.position)
@@ -274,10 +276,10 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                 MoverAContenedor(zonaCartaJugada.transform);
 
                 // 🔴 CAMBIO 4: Crear PokemonInstance ANTES de usarlo
-                pokemonInstance = new PokemonInstance(cardUI.cardData);
+                pokemonInstance = new PokemonInstance(cardtablero.cardData);
 
                 if (zonaActivaLocal != null)
-                    zonaActivaLocal.ColocarPokemon(cardUI.cardData);
+                    zonaActivaLocal.ColocarPokemon(cardtablero.cardData);
 
                 estaEnTablero = true;
                 canvasGroup.blocksRaycasts = false; // Desactivamos interacci�n mientras se procesa
@@ -405,7 +407,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
             MoverAContenedor(zonaBanca.transform);
 
             // 🔴 CAMBIO 5: Crear PokemonInstance siempre
-            pokemonInstance = new PokemonInstance(cardUI.cardData);
+            pokemonInstance = new PokemonInstance(cardtablero.cardData);
 
             // 🔴 CAMBIO 6: Notificar a ZonaTablero del slot de banca
             ZonaTablero[] bancaZonas = FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None);
@@ -413,7 +415,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
             {
                 if (z.EsMiZona() && z.gameObject.name.Contains("Banca") && !z.EstaOcupada())
                 {
-                    z.ColocarPokemon(cardUI.cardData);
+                    z.ColocarPokemon(cardtablero.cardData);
                     break;
                 }
             }
