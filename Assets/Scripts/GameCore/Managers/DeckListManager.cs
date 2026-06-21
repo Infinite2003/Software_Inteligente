@@ -24,6 +24,8 @@ public class DeckListManager : MonoBehaviour
     [SerializeField] private TMP_Dropdown typeDropdown;
     [SerializeField] private TMP_Dropdown exDropDown;
 
+    private DeckUI selectedDeckUI;
+
 
     private void Start()
     {
@@ -174,6 +176,22 @@ public class DeckListManager : MonoBehaviour
 
     public void SelectDeck(TCGPDeck selectedDeck)
     {
+        if (selectedDeckUI != null)
+            selectedDeckUI.SetSelected(false);
+
+        foreach (Transform child in deckContentParent)
+        {
+            DeckUI deckUI = child.GetComponent<DeckUI>();
+            if (deckUI != null && deckUI.deck == selectedDeck)
+            {
+                deckUI.SetSelected(true);
+                selectedDeckUI = deckUI;
+                break;
+            }
+        }
+
+        CardGameManager._instance.currentDeck = selectedDeck.cards;
+
         PopulateCardView(selectedDeck.cards, cardContentParent);
     }
 

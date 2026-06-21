@@ -191,6 +191,7 @@ MonoBehaviour:
     cards: []
   deckNameText: {fileID: 1219828144953917517}
   button: {fileID: 6285616739589224571}
+  buttonImage: {fileID: 2905452019378390918}
 --- !u!1 &3970886998823776541
 GameObject:
   m_ObjectHideFlags: 0
