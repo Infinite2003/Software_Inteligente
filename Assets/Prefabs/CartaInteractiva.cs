@@ -199,6 +199,12 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
             ? Vector3.Distance(transform.position, zonaApoyo.transform.position)
             : float.MaxValue;
 
+        Debug.Log($"[Drag] zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name : "NULL")} | " +
+          $"zonaBanca={(zonaBanca != null ? zonaBanca.name : "NULL")} | " +
+          $"zonaApoyo={(zonaApoyo != null ? zonaApoyo.name : "NULL")} | " +
+          $"distActivo={distanciaAActivo:F0} | distBanca={distanciaABanca:F0} | distApoyo={distanciaAApoyo:F0} | " +
+          $"deteccion={distanciaDeteccion}");
+
         // ── ZONA DE APOYO ─────────────────────────────────────────────────────
         if (distanciaAApoyo <= distanciaDeteccion &&
             distanciaAApoyo < distanciaAActivo &&
@@ -411,6 +417,13 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
             // 🔴 CAMBIO 6: Notificar a ZonaTablero del slot de banca
             ZonaTablero[] bancaZonas = FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None);
+            Debug.Log($"[Drag] ZonaTablero encontradas: {bancaZonas.Length}");
+            foreach (var z in FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None))
+            {
+                Debug.Log($"[ZonaTablero] '{z.gameObject.name}' | EsMiZona={z.EsMiZona()} | " +
+                          $"EsActivo={z.EsActivo()} | EstaOcupada={z.EstaOcupada()} | " +
+                          $"IsHost={Unity.Netcode.NetworkManager.Singleton.IsHost}");
+            }
             foreach (var z in bancaZonas)
             {
                 if (z.EsMiZona() && z.gameObject.name.Contains("Banca") && !z.EstaOcupada())

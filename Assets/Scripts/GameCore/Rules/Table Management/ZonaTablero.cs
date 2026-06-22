@@ -1,61 +1,79 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
 
-public class ZonaTablero : NetworkBehaviour
+public class ZonaTablero : MonoBehaviour
 {
-    [Header("¿A qué jugador pertenece esta zona?")]
+    [Header("Â¿A quÃ© jugador pertenece esta zona?")]
     [SerializeField] private bool esDelHost = true;
     [SerializeField] private bool esActivo;
     public PokemonInstance pokemonEnZona { get; private set; }
 
+    private int hpActual = 0;
+    private int energiaActual = 0;
+    private string idCarta = "";
+
+    void Awake()
+    {
+        string nombre = gameObject.name;
+
+        if (nombre.Contains("_J1"))
+        {
+            esDelHost = true;
+            esActivo = true;
+        }
+        else if (nombre.Contains("_J2"))
+        {
+            esDelHost = false;
+            esActivo = true;
+        }
+        else
+        {
+            Debug.LogWarning($"[ZonaTablero] '{nombre}' no tiene sufijo _J1 o _J2. " +
+                             $"Usando valores del Inspector: esDelHost={esDelHost}, esActivo={esActivo}");
+        }
+
+        Debug.Log($"[ZonaTablero] '{nombre}' inicializado â†’ esDelHost={esDelHost}, esActivo={esActivo}");
+    }
+
     public bool EsMiZona()
     {
-        if (!NetworkManager.Singleton.IsListening) return esDelHost;
-        bool soyHost = NetworkManager.Singleton.IsHost;
+        // Si la red no estÃ¡ activa (modo offline/editor), confiamos en el Inspector
+        if (Unity.Netcode.NetworkManager.Singleton == null ||
+            !Unity.Netcode.NetworkManager.Singleton.IsListening)
+            return esDelHost;
+
+        bool soyHost = Unity.Netcode.NetworkManager.Singleton.IsHost;
         return soyHost == esDelHost;
     }
+
+    public bool EsActivo() => esActivo;
+
+    public bool EstaOcupada() => pokemonEnZona != null;
 
     public void ColocarPokemon(TCGPCard cartaData)
     {
         pokemonEnZona = new PokemonInstance(cartaData);
-        Debug.Log($"{cartaData.name} colocado en zona de {(EsMiZona() ? "LOCAL" : "RIVAL")}");
+        hpActual = pokemonEnZona.currentHP;
+        idCarta = cartaData.id;
+        Debug.Log($"[ZonaTablero] {cartaData.name} colocado en '{gameObject.name}' " +
+                  $"({(EsMiZona() ? "LOCAL" : "RIVAL")})");
     }
 
     public void LiberarZona()
     {
         pokemonEnZona = null;
+        hpActual = 0;
+        energiaActual = 0;
+        idCarta = "";
     }
 
-    private NetworkVariable<int> hpActual = new NetworkVariable<int>(
-    0,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Owner  // solo el dueño actualiza su propio HP
-);
-
-    private NetworkVariable<int> energiaActual = new NetworkVariable<int>(
-        0,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Owner
-    );
-
-    private NetworkVariable<FixedString64Bytes> idCarta = new NetworkVariable<FixedString64Bytes>(
-        "",
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Owner
-    );
-
-    // Cuando recibes daño del rival, actualizas tu propia NetworkVariable
-    public void RecibirDaño(int cantidad)
+    // Cuando recibes daÃ±o del rival, actualizas tu propia NetworkVariable
+    public void RecibirDaÃ±o(int cantidad)
     {
         if (pokemonEnZona == null) return;
         pokemonEnZona.TakeDamage(cantidad);
-        hpActual.Value = pokemonEnZona.currentHP; // esto se replica al rival automáticamente
+        hpActual = pokemonEnZona.currentHP;
+        Debug.Log($"[ZonaTablero] '{gameObject.name}' recibiÃ³ {cantidad} de daÃ±o. HP restante: {hpActual}");
     }
-
-    public bool EsActivo()
-    {
-        return esActivo;
-    }
-    public bool EstaOcupada() => pokemonEnZona != null;
 }
