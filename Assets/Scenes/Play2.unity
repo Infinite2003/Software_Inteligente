@@ -1135,6 +1135,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 133c4f2f41ddae948bfc98bdae2db98e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZonaTablero
+  ShowTopMostFoldoutHeaderGroup: 1
+  esDelHost: 1
+  esActivo: 0
 --- !u!114 &583510175
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3172,6 +3175,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 133c4f2f41ddae948bfc98bdae2db98e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZonaTablero
+  ShowTopMostFoldoutHeaderGroup: 1
+  esDelHost: 0
+  esActivo: 1
 --- !u!114 &1913988919
 MonoBehaviour:
   m_ObjectHideFlags: 0
