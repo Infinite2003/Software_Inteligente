@@ -34,6 +34,7 @@ public class ZonaTablero : MonoBehaviour
         }
 
         Debug.Log($"[ZonaTablero] '{nombre}' inicializado → esDelHost={esDelHost}, esActivo={esActivo}");
+        Debug.Log($"Debug GPT: [{gameObject.name}] pokemonEnZona = {pokemonEnZona}");
     }
 
     public bool EsMiZona()

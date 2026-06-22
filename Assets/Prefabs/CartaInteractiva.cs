@@ -263,6 +263,8 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
             bool zonaOcupada = zonaActivaLocal != null && zonaActivaLocal.EstaOcupada();
 
+
+
             if (zonaOcupada)
             {
                 Debug.LogWarning("La zona Activa ya está ocupada.");
