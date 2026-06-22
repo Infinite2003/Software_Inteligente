@@ -11,7 +11,7 @@ public class DeckUI : MonoBehaviour
     [SerializeField] private Button button;
     [SerializeField] private Image buttonImage;
 
-    private Color selectedColor = Color.green;
+    private Color selectedColor = new Color(1.0f, 1.0f, 1.0f, 1f);
     private Color deselectedColor = new Color(0.6f, 0.6f, 0.6f, 1f);
 
     public void Setup(TCGPDeck deck, Action<TCGPDeck> onSelected)
