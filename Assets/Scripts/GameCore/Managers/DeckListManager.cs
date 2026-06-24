@@ -13,8 +13,8 @@ public class DeckListManager : MonoBehaviour
     [SerializeField] private TMP_InputField deckNameInput;
     [SerializeField] private GameObject deckGenerationWindow;
 
-    [SerializeField] private Transform generatedCardContentParent; //Padre de las cartas generadas, que se ven en la ventana que se abre
-    [SerializeField] private Transform cardContentParent; //Padre de las cartas del mazo seleccionado, en la pantalla inicial
+    [SerializeField] private Transform generatedCardContentParent;
+    [SerializeField] private Transform cardContentParent; 
     [SerializeField] private Transform deckContentParent;
 
     [SerializeField] private GameObject cardItemPrefab;
@@ -270,7 +270,7 @@ public class DeckListManager : MonoBehaviour
 
     private void SetDropdownFontSize(TMP_Dropdown dropdown, float fontSize, float itemHeight = 50f)
     {
-        dropdown.captionText.fontSize = fontSize;
+        //dropdown.captionText.fontSize = fontSize;
         dropdown.itemText.fontSize = fontSize;
 
         // Ajustar altura de cada item
