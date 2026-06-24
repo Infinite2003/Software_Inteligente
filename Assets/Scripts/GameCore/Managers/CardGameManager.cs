@@ -84,18 +84,9 @@ public class CardGameManager : MonoBehaviour
         }
         else if (Keyboard.current != null && Keyboard.current.enterKey.wasReleasedThisFrame)
         {
-            TCGPCard kogaCard = pool.Find(c => c.name.Equals("Koga", System.StringComparison.OrdinalIgnoreCase));
-
-            if (kogaCard != null)
-            {
-                Debug.Log($"Carta encontrada con Éxito: {kogaCard.name}");
-                Debug.Log($"   | Categoría: {kogaCard.category}");
-                Debug.Log($"   | Texto Efecto/Descripción: {(string.IsNullOrEmpty(kogaCard.effect) ? kogaCard.description : kogaCard.effect)}");
-            }
-            else
-            {
-                Debug.LogWarning("No se encontró la carta 'Koga' en la base de datos (Pool). Asegúrate de que el JSON la tenga.");
-            }
+            foreach (var card in pool)
+                if (!string.IsNullOrEmpty(card.effect) && card.effect.Contains("{"))
+                    Debug.Log($"{card.name}: {card.effect}");
         }
     }
 
