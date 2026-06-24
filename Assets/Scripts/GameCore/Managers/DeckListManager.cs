@@ -50,6 +50,9 @@ public class DeckListManager : MonoBehaviour
                 Enum.GetNames(typeof(PokemonType))));
 
         OnTypeChanged(typeDropdown.value);
+        SetDropdownFontSize(fightStyleDropdown, 40f);
+        SetDropdownFontSize(typeDropdown, 40f);
+        SetDropdownFontSize(exDropDown, 40f);
     }
 
     private void rebuildDecks()
@@ -265,4 +268,14 @@ public class DeckListManager : MonoBehaviour
         Debug.Log("Todos los mazos han sido eliminados.");
     }
 
+    private void SetDropdownFontSize(TMP_Dropdown dropdown, float fontSize, float itemHeight = 50f)
+    {
+        dropdown.captionText.fontSize = fontSize;
+        dropdown.itemText.fontSize = fontSize;
+
+        // Ajustar altura de cada item
+        RectTransform itemRect = dropdown.itemText.transform.parent.GetComponent<RectTransform>();
+        if (itemRect != null)
+            itemRect.sizeDelta = new Vector2(itemRect.sizeDelta.x, itemHeight);
+    }   
 }
