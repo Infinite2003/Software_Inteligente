@@ -33,3 +33,27 @@ public enum PokemonStage
     Stage1,
     Stage2
 }
+
+public enum EffectCategory
+{
+    // Pokémon y Trainers
+    Healing, 
+    EnergyAcceleration,
+    DamageReduction,
+    PassiveDamage,
+
+    // Principalmente Trainers
+    DamageBoost,
+    BenchManipulation,
+    Disruption,
+
+    // Principalmente Pokémon
+    StatusEffect,
+    Utility,
+
+    // Fósiles
+    Fossil,
+
+    // Fallback
+    Unknown
+}
