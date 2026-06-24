@@ -69,16 +69,13 @@ public static class AbilityEvaluator
         return new AbilityScore { category = EffectCategory.Unknown, baseValue = 3f };
     }
 
-    // --- Evaluadores por categoría ---
-
     private static AbilityScore EvaluateHealing(string effect)
     {
         float value = 8f;
 
         int amount = ExtractNumber(effect);
-        if (amount > 0) value += amount * 0.15f; // "curar 20 a cada uno" → +3f
+        if (amount > 0) value += amount * 0.15f; 
 
-        // Bonus si cura a TODOS los Pokémon (Butterfree)
         if (effect.Contains("cada uno") || effect.Contains("todos"))
             value += 5f;
 
@@ -92,12 +89,9 @@ public static class AbilityEvaluator
         int amount = ExtractNumber(effect);
         if (amount > 1) value += amount * 1.5f;
 
-        // Bonus si el tipo de energía coincide con el mazo
-        // Serperior — dobla energías del tipo correcto
         if (effect.Contains("proporciona 2"))
-            value += 10f; // efecto de multiplicación es muy fuerte
+            value += 10f;
 
-        // Vaporeon — mueve energía libremente entre Pokémon del mismo tipo
         if (effect.Contains("todas las veces") || effect.Contains("quieras"))
             value += 6f;
 
@@ -109,7 +103,7 @@ public static class AbilityEvaluator
         float value = 7f;
 
         int amount = ExtractNumber(effect);
-        if (amount > 0) value += amount * 0.2f; // 20 daño → +4f
+        if (amount > 0) value += amount * 0.2f; 
 
         return new AbilityScore { category = EffectCategory.PassiveDamage, baseValue = value };
     }
@@ -119,7 +113,7 @@ public static class AbilityEvaluator
         float value = 7f;
 
         int reduction = ExtractNumber(effect);
-        if (reduction > 0) value += reduction * 0.3f; // -20 → +6f, más que -10 → +3f
+        if (reduction > 0) value += reduction * 0.3f; 
 
         return new AbilityScore { category = EffectCategory.DamageReduction, baseValue = value };
     }
@@ -128,11 +122,9 @@ public static class AbilityEvaluator
     {
         float value = 12f;
 
-        // Gengar ex — bloquea Supporters del rival, muy fuerte en control
         if (effect.Contains("partidario"))
             value += 5f;
 
-        // Aerodactyl ex — bloquea evoluciones del rival
         if (effect.Contains("evolucionar"))
             value += 5f;
 
@@ -143,12 +135,10 @@ public static class AbilityEvaluator
     {
         float value = 6f;
 
-        // Veneno es más valioso que sueño (daño continuo garantizado)
         if (effect.Contains("envenenado")) value += 4f;
         if (effect.Contains("dormido")) value += 3f;
         if (effect.Contains("paralizado")) value += 3f;
 
-        // Penalizar si depende de moneda (Hypno, Weezing)
         if (effect.Contains("moneda")) value -= 2f;
 
         return new AbilityScore { category = EffectCategory.StatusEffect, baseValue = value };
@@ -158,11 +148,9 @@ public static class AbilityEvaluator
     {
         float value = 8f;
 
-        // Victreebel — fuerza cambio del activo del rival, muy disruptivo
         if (effect.Contains("rival") && effect.Contains("activo"))
             value += 4f;
 
-        // Pidgeot — mueve activo del rival al banco
         if (effect.Contains("mover") && effect.Contains("rival"))
             value += 3f;
 
@@ -174,12 +162,11 @@ public static class AbilityEvaluator
         float value = 7f;
 
         int amount = ExtractNumber(effect);
-        if (amount > 0) value += amount * 0.2f; // Greninja 20 daño → +4f
+        if (amount > 0) value += amount * 0.2f;
 
         return new AbilityScore { category = EffectCategory.PassiveDamage, baseValue = value };
     }
 
-    // --- Helper ---
 
     private static int ExtractNumber(string text)
     {

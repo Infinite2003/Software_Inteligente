@@ -1107,10 +1107,11 @@ GameObject:
   - component: {fileID: 3961044724944828823}
   - component: {fileID: 7686568254800053938}
   - component: {fileID: 1649001197573086148}
-  - component: {fileID: 4804560083387611635}
   - component: {fileID: 4989627571150055100}
   - component: {fileID: -5251317995154664705}
   - component: {fileID: 1047421521361185439}
+  - component: {fileID: -3027438707728722293}
+  - component: {fileID: 5060467395739184900}
   m_Layer: 5
   m_Name: Carta
   m_TagString: Untagged
@@ -1162,12 +1163,15 @@ MonoBehaviour:
   pokemonInstance:
     data:
       id: 
+      set_number: 
       name: 
       category: 0
       sub_category: 0
       type: 0
       hp: 0
       retreat_cost: 0
+      rarity: 
+      evolve_from: 
       description: 
       effect: 
       weakness:
@@ -1175,6 +1179,8 @@ MonoBehaviour:
         value: 
       ability: []
       moves: []
+      packs: []
+      image_url: 
     currentHP: 0
     attachedEnergy: 0
     evolvedThisTurn: 0
@@ -1187,36 +1193,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7805995527043636860}
   m_CullTransparentMesh: 1
---- !u!114 &4804560083387611635
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7805995527043636860}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 8403821372833622492, guid: 5b6fa865b8413534389e3af8ec7c839d, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!114 &4989627571150055100
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1270,14 +1246,19 @@ MonoBehaviour:
   descripcionTexto: {fileID: 7109632043720570707}
   efectoTexto: {fileID: 8196419804239094901}
   costeRetiradaTexto: {fileID: 2147066155643128658}
+  cardImage: {fileID: 5060467395739184900}
+  imageLoader: {fileID: -3027438707728722293}
   cardData:
     id: 
+    set_number: 
     name: 
     category: 0
     sub_category: 0
     type: 0
     hp: 0
     retreat_cost: 0
+    rarity: 
+    evolve_from: 
     description: 
     effect: 
     weakness:
@@ -1285,6 +1266,47 @@ MonoBehaviour:
       value: 
     ability: []
     moves: []
+    packs: []
+    image_url: 
+--- !u!114 &-3027438707728722293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7805995527043636860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74ce19ecb95b5f04b81f799f1e9a83a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CardImageLoader
+--- !u!114 &5060467395739184900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7805995527043636860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1344c3c82d62a2a41a3576d8abb8e3ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Texture: {fileID: 0}
+  m_UVRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
 --- !u!1 &9034004166612942958
 GameObject:
   m_ObjectHideFlags: 0

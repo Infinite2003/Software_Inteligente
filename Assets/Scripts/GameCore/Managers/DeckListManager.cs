@@ -57,7 +57,6 @@ public class DeckListManager : MonoBehaviour
 
     private void rebuildDecks()
     {
-        Debug.Log("Cantidad de mazos guardados: " + lightweightDecks.Count);
         if (lightweightDecks == null || CardGameManager._instance.cardDatabase == null)
             return;
 
@@ -103,7 +102,6 @@ public class DeckListManager : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(deckName))
         {
-            Debug.LogWarning("Deck name is empty");
             return;
         }
 
@@ -123,12 +121,10 @@ public class DeckListManager : MonoBehaviour
 
         DeckSaveSystem.SaveDeck(savedDeck);
 
-        Debug.Log("Deck saved");
 
         deckList.Add(BuildRuntimeDecks(savedDeck));
         PopulateDeckView(deckList, deckContentParent);
 
-        // Limpiamos la entrada para el próximo mazo
         deckNameInput.text = "";
 
         CloseGeneratedDeckWindow();
@@ -198,14 +194,12 @@ public class DeckListManager : MonoBehaviour
         PopulateCardView(selectedDeck.cards, cardContentParent);
     }
 
-    //Seleccion del tipo de juego y carta
 
     public void OnFightStyleChanged(int index)
     {
         BattleType selectedBattleType = (BattleType)index;
         CardGameManager._instance.deckPreferences.playstyle = selectedBattleType;
 
-        Debug.Log("Battle Type: " + CardGameManager._instance.deckPreferences.playstyle);
 
     }
 
@@ -225,14 +219,12 @@ public class DeckListManager : MonoBehaviour
         if (exCards.Count > 0)
         {
             CardGameManager._instance.deckPreferences.anchorCard = exCards[0];
-            Debug.Log("Anchor por defecto: " + exCards[0].name);
         }
         else
         {
             Debug.LogWarning("No hay cartas EX para el tipo: " + selectedType);
         }
 
-        Debug.Log("Tipo seleccionado: " + selectedType);
     }
 
     public void OnExChanged(int index)
@@ -241,19 +233,15 @@ public class DeckListManager : MonoBehaviour
         if (exCards == null || exCards.Count == 0)
         {
             CardGameManager._instance.deckPreferences.anchorCard = null;
-            Debug.LogWarning("No hay cartas EX disponibles para este tipo.");
             return;
         }
 
-        // Obtener la lista única de nombres en el mismo orden del dropdown
         var distinctNames = exCards.Select(card => card.name).Distinct().ToList();
         if (index >= distinctNames.Count) return;
 
         string selectedName = distinctNames[index];
-        // Encontrar la primera carta de la DB que coincida con este nombre
         CardGameManager._instance.deckPreferences.anchorCard = exCards.FirstOrDefault(c => c.name == selectedName) ?? exCards[0];
 
-        Debug.Log("EX seleccionado: " + CardGameManager._instance.deckPreferences.anchorCard.name);
     }
     public void ClearAllDecks()
     {
@@ -270,10 +258,8 @@ public class DeckListManager : MonoBehaviour
 
     private void SetDropdownFontSize(TMP_Dropdown dropdown, float fontSize, float itemHeight = 50f)
     {
-        //dropdown.captionText.fontSize = fontSize;
         dropdown.itemText.fontSize = fontSize;
 
-        // Ajustar altura de cada item
         RectTransform itemRect = dropdown.itemText.transform.parent.GetComponent<RectTransform>();
         if (itemRect != null)
             itemRect.sizeDelta = new Vector2(itemRect.sizeDelta.x, itemHeight);

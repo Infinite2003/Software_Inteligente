@@ -33,15 +33,7 @@ public class DeckBuilder
             }
         }
 
-        Debug.Log($"[BuildDeck] Mejor score obtenido: {bestScore}");
-
         List<string> validationErrors = ValidateDeck(bestDeck, targetSize);
-        if (validationErrors.Count > 0)
-            foreach (var error in validationErrors)
-                Debug.LogWarning($"[ValidateDeck] {error}");
-        else
-            Debug.Log("[ValidateDeck] Mazo válido.");
-
         return bestDeck;
     }
     private List<TCGPCard> ShufflePool(List<TCGPCard> pool, int seed)
@@ -587,7 +579,6 @@ public class DeckBuilder
 
         if (!IsEX(preferences.anchorCard))
         {
-            Debug.LogWarning($"[Anchor] '{preferences.anchorCard.name}' no es una carta EX. Se construirá sin anchor.");
             preferences.anchorCard = null;
             return;
         }
@@ -601,25 +592,20 @@ public class DeckBuilder
 
             if (prev == null)
             {
-                Debug.LogWarning($"[Anchor] No se encontró '{current.evolve_from}' en el pool. La cadena de '{preferences.anchorCard.name}' está incompleta. Se construirá sin anchor.");
                 preferences.anchorCard = null;
                 return;
             }
 
             current = prev;
         }
-
-        Debug.Log($"[Anchor] '{preferences.anchorCard.name}' validado correctamente. Cadena completa en el pool.");
     }
     private float AnchorChainBonus(TCGPCard candidate, List<TCGPCard> pool)
     {
         if (preferences.anchorCard == null) return 0f;
 
-        // La carta ES el anchor
         if (candidate.name.Equals(preferences.anchorCard.name, StringComparison.OrdinalIgnoreCase))
             return 25f;
 
-        // La carta es parte de la cadena del anchor
         if (IsInAnchorChain(candidate, pool))
             return 15f;
 

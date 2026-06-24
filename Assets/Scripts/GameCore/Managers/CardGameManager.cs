@@ -115,18 +115,11 @@ public class CardGameManager : MonoBehaviour
         }
 
         pool = ConvertToGameCards(db.cards);
-        foreach (var card in pool)
-        {
-            if (IsTrainerCard(card) && !string.IsNullOrEmpty(card.effect))
-                Debug.Log($"[Trainer] {card.name}: {card.effect}");
-        }
 
         cardDatabase = new Dictionary<string, TCGPCard>();
 
         foreach (var card in pool)
             cardDatabase[card.id] = card;
-
-        Debug.Log($"Se cargaron exitosamente {pool.Count} cartas desde {jsonFileName}");
     }
 
     private List<TCGPCard> ConvertToGameCards(List<TCGPCardRaw> rawCards)
@@ -147,15 +140,12 @@ public class CardGameManager : MonoBehaviour
                 rarity = raw.rarity,
                 evolve_from = raw.evolve_from,
 
-                // FIX 2: ParseCategory recibe trainer_type para mapear Supporter/Item correctamente
                 category = ParseCategory(raw.category, raw.trainer_type),
 
-                // FIX 1 & 5: ParseStage directo desde raw.stage (sub_category eliminado del Raw)
                 sub_category = ParseStage(raw.stage),
 
                 type = ParseType(raw.type),
 
-                // FIX 3: ConvertMoves ya mapea move.effect
                 moves = ConvertMoves(raw.moves),
 
                 weakness = raw.weakness != null
@@ -164,8 +154,9 @@ public class CardGameManager : MonoBehaviour
 
                 ability = ConvertAbilities(raw.ability),
 
-                // FIX 4: packs ahora se transfieren
-                packs = ConvertPacks(raw.packs)
+                packs = ConvertPacks(raw.packs),
+
+                image_url = raw.image_url
             };
 
             result.Add(card);
@@ -204,7 +195,7 @@ public class CardGameManager : MonoBehaviour
                 name = m.name,
                 damage = m.damage,
                 cost = m.cost,
-                effect = m.effect  // FIX 3: efecto del movimiento mapeado
+                effect = m.effect 
             });
         }
 
@@ -228,7 +219,6 @@ public class CardGameManager : MonoBehaviour
         return packs;
     }
 
-    // FIX 2: Recibe trainer_type para distinguir Supporter e Item
     private CardCategory ParseCategory(string category, string trainerType)
     {
         if (string.IsNullOrEmpty(category)) return CardCategory.Pokemon;
@@ -252,8 +242,6 @@ public class CardGameManager : MonoBehaviour
 
         return CardCategory.Pokemon;
     }
-
-    // FIX 1: Maneja los valores en español del JSON
     private PokemonStage ParseStage(string value)
     {
         if (string.IsNullOrEmpty(value)) return PokemonStage.Basic;
@@ -286,7 +274,7 @@ public class CardGameManager : MonoBehaviour
             "psiquico" => PokemonType.Psiquico,
             "lucha" => PokemonType.Lucha,
             "oscuro" => PokemonType.Oscuro,
-            "oscura" => PokemonType.Oscuro,  // variante femenina que usa el JSON en weakness
+            "oscura" => PokemonType.Oscuro,
             "metálico" => PokemonType.Metalico,
             "metalico" => PokemonType.Metalico,
             "dragón" => PokemonType.Dragon,
