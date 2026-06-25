@@ -9,6 +9,7 @@ public class CardUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI tipoTexto;
     [SerializeField] private RawImage cardImage;
     [SerializeField] private CardImageLoader imageLoader;
+    [SerializeField] private GameObject loadingOverlay;
 
     public void SetData(TCGPCard carta)
     {
@@ -16,6 +17,13 @@ public class CardUI : MonoBehaviour
         hpTexto.text = "HP: " + carta.hp;
         tipoTexto.text = carta.type.ToString();
 
-        imageLoader.LoadImage(carta.image_url, cardImage);
+        if (loadingOverlay != null)
+            loadingOverlay.SetActive(true);
+
+        imageLoader.LoadImage(carta.image_url, cardImage, () =>
+        {
+            if (loadingOverlay != null)
+                loadingOverlay.SetActive(false);
+        });
     }
 }

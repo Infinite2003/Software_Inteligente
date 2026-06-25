@@ -792,15 +792,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
   m_Padding:
-    m_Left: 25
+    m_Left: 50
     m_Right: 0
-    m_Top: 22
-    m_Bottom: 22
+    m_Top: 25
+    m_Bottom: 25
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 127, y: 100}
-  m_Spacing: {x: 0, y: 63}
+  m_CellSize: {x: 100, y: 110}
+  m_Spacing: {x: 10, y: 50}
   m_Constraint: 0
   m_ConstraintCount: 2
 --- !u!1 &147968658
@@ -6629,6 +6629,7 @@ MonoBehaviour:
       ability: []
       moves: []
       packs: []
+      image_url: 
 --- !u!4 &1503777112
 Transform:
   m_ObjectHideFlags: 0
@@ -7838,15 +7839,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GridLayoutGroup
   m_Padding:
-    m_Left: 10
+    m_Left: 0
     m_Right: 0
     m_Top: 15
     m_Bottom: 15
   m_ChildAlignment: 0
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 105, y: 120}
-  m_Spacing: {x: 0, y: 0}
+  m_CellSize: {x: 100, y: 130}
+  m_Spacing: {x: 10, y: 50}
   m_Constraint: 0
   m_ConstraintCount: 2
 --- !u!1 &1916886316

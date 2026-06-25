@@ -8,20 +8,21 @@ public class CardImageLoader : MonoBehaviour
 {
     private static Dictionary<string, Texture2D> cache = new Dictionary<string, Texture2D>();
 
-    public void LoadImage(string url, RawImage target)
+    public void LoadImage(string url, RawImage target, System.Action onComplete = null)
     {
         if (string.IsNullOrEmpty(url) || target == null) return;
 
         if (cache.TryGetValue(url, out Texture2D cached))
         {
             target.texture = cached;
+            onComplete?.Invoke();
             return;
         }
 
-        StartCoroutine(DownloadImage(url, target));
+        StartCoroutine(DownloadImage(url, target, onComplete));
     }
 
-    private IEnumerator DownloadImage(string url, RawImage target)
+    private IEnumerator DownloadImage(string url, RawImage target, System.Action onComplete)
     {
         using var request = UnityWebRequestTexture.GetTexture(url);
         yield return request.SendWebRequest();
@@ -33,6 +34,8 @@ public class CardImageLoader : MonoBehaviour
 
             if (target != null)
                 target.texture = texture;
+
+            onComplete?.Invoke();
         }
         else
         {

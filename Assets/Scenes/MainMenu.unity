@@ -573,7 +573,7 @@ MonoBehaviour:
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: Play2
+          m_StringArgument: Play
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &573592843
@@ -1162,6 +1162,7 @@ MonoBehaviour:
       ability: []
       moves: []
       packs: []
+      image_url: 
 --- !u!4 &1441607341
 Transform:
   m_ObjectHideFlags: 0

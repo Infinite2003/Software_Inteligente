@@ -1128,7 +1128,7 @@ RectTransform:
   m_GameObject: {fileID: 7805995527043636860}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 0.8, z: 1}
+  m_LocalScale: {x: 1.6011, y: 1.28088, z: 1.6011}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 453190477899269257}
@@ -1144,7 +1144,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -61.55188, y: 107.11}
+  m_AnchoredPosition: {x: -61.387, y: 107.09}
   m_SizeDelta: {x: 50, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &7686568254800053938
@@ -1248,6 +1248,7 @@ MonoBehaviour:
   costeRetiradaTexto: {fileID: 2147066155643128658}
   cardImage: {fileID: 5060467395739184900}
   imageLoader: {fileID: -3027438707728722293}
+  loadingOverlay: {fileID: 0}
   cardData:
     id: 
     set_number: 
