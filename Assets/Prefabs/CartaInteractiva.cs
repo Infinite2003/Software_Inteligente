@@ -32,8 +32,8 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
     void Start()
     {
-        escalaOriginal = transform.localScale;
         rectTransform = GetComponent<RectTransform>();
+        escalaOriginal = rectTransform != null ? rectTransform.localScale : transform.localScale;
         cardtablero = GetComponent<CardTablero>();
 
         canvasGroup = GetComponent<CanvasGroup>();

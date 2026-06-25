@@ -42,27 +42,25 @@ public class CardGameManager : MonoBehaviour
         LoadCards("tcg_pocket_card_unity");
     }
 
-    void Start()
-    {
-        // Simulación: elegir la primera EX del tipo preferido como anchor
-        List<TCGPCard> exCards = GetEXCardsByType(deckPreferences.preferredType);
-
-        if (exCards != null && exCards.Count > 0)
-        {
-            deckPreferences.anchorCard = exCards[0];
-            Debug.Log($"Anchor seleccionado: {deckPreferences.anchorCard.name}");
-        }
-        else
-        {
-            deckPreferences.anchorCard = null;
-            Debug.LogWarning("No se encontraron cartas EX para el tipo preferido. Se construirá sin anchor.");
-        }
-    }
-
     public void CreateDeck()
     {
         if (miMazo != null)
             miMazo.Clear();
+
+        if (deckPreferences.anchorCard == null)
+        {
+            List<TCGPCard> exCards = GetEXCardsByType(deckPreferences.preferredType);
+            if (exCards != null && exCards.Count > 0)
+            {
+                int randomIndex = UnityEngine.Random.Range(0, exCards.Count);
+                deckPreferences.anchorCard = exCards[randomIndex];
+                Debug.Log($"[CreateDeck] Anchor aleatorio: {deckPreferences.anchorCard.name}");
+            }
+            else
+            {
+                Debug.Log($"[CreateDeck] No hay EX para {deckPreferences.preferredType}. Se construirá sin anchor.");
+            }
+        }
 
         miMazo = deckBuilder.BuildDeck(pool, 20, deckPreferences);
         Debug.Log($"Mazo creado con {miMazo.Count} cartas.");
@@ -298,13 +296,6 @@ public class CardGameManager : MonoBehaviour
          card.type == type &&
          !string.IsNullOrEmpty(card.name) &&
          card.name.EndsWith(" ex", StringComparison.OrdinalIgnoreCase));
-    }
-
-    private bool IsTrainerCard(TCGPCard card)
-    {
-        return card.category == CardCategory.Trainer ||
-               card.category == CardCategory.Supporter ||
-               card.category == CardCategory.Item;
     }
 }
 

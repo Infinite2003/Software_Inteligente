@@ -142,7 +142,8 @@ public class GeneradorMazo : MonoBehaviour
                     RectTransform rect = cartaAceptada.GetComponent<RectTransform>();
                     rect.localPosition = Vector3.zero;
                     rect.localRotation = Quaternion.identity;
-                    rect.localScale = Vector3.one;
+                    // Mantener la escala definida en el prefab
+                    // rect.localScale se deja intacta
                 }
                 Debug.Log($"Mano inicial aceptada tras {intentos} intentos.");
             }
@@ -184,6 +185,7 @@ public class GeneradorMazo : MonoBehaviour
         {
             RectTransform rect = listaDeCartas[i].GetComponent<RectTransform>();
             rect.anchoredPosition = new Vector2(-i * desfaseEntreCartas, i * desfaseEntreCartas);
+            // No tocar localScale para conservar la escala del prefab
         }
     }
 
@@ -205,7 +207,7 @@ public class GeneradorMazo : MonoBehaviour
                 RectTransform rect = cartaARobar.GetComponent<RectTransform>();
                 rect.localPosition = Vector3.zero;
                 rect.localRotation = Quaternion.identity;
-                rect.localScale = Vector3.one;
+                // No tocar localScale para conservar la escala del prefab
             }
             else
             {

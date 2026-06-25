@@ -40,8 +40,7 @@ public class Play_cartas : MonoBehaviour
 
             RectTransform rt = obj.GetComponent<RectTransform>();
 
-            // IMPORTANTE
-            rt.localScale = Vector3.one;
+            // Mantener la escala del prefab; solo ajustar posición
             rt.anchoredPosition = new Vector2(i * 120, 0);
         }
     }

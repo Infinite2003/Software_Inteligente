@@ -41,12 +41,12 @@ public class DeckListManager : MonoBehaviour
         fightStyleDropdown.ClearOptions();
 
         fightStyleDropdown.AddOptions(
-            new System.Collections.Generic.List<string>(
+            new List<string>(
                 Enum.GetNames(typeof(BattleType))));
 
         typeDropdown.ClearOptions();
         typeDropdown.AddOptions(
-            new System.Collections.Generic.List<string>(
+            new List<string>(
                 Enum.GetNames(typeof(PokemonType))));
 
         OnTypeChanged(typeDropdown.value);
@@ -207,28 +207,38 @@ public class DeckListManager : MonoBehaviour
     {
         PokemonType selectedType = (PokemonType)index;
         CardGameManager._instance.deckPreferences.preferredType = selectedType;
-
         CardGameManager._instance.deckPreferences.anchorCard = null;
 
         exDropDown.ClearOptions();
 
         List<TCGPCard> exCards = CardGameManager._instance.GetEXCardsByType(selectedType);
-        exDropDown.AddOptions(exCards.Select(card => card.name).Distinct().ToList());
-        exDropDown.RefreshShownValue();
 
-        if (exCards.Count > 0)
+        if (exCards.Count == 0)
         {
-            CardGameManager._instance.deckPreferences.anchorCard = exCards[0];
+            exDropDown.AddOptions(new List<string> { "No hay cartas EX" });
+            exDropDown.interactable = false;
+            CardGameManager._instance.deckPreferences.anchorCard = null;
         }
         else
         {
-            Debug.LogWarning("No hay cartas EX para el tipo: " + selectedType);
+            exDropDown.interactable = true;
+            List<string> options = new List<string> { "Ninguno" };
+            options.AddRange(exCards.Select(card => card.name).Distinct());
+            exDropDown.AddOptions(options);
+            exDropDown.value = 0;
         }
 
+        exDropDown.RefreshShownValue();
     }
 
     public void OnExChanged(int index)
     {
+        if (index == 0)
+        {
+            CardGameManager._instance.deckPreferences.anchorCard = null;
+            return;
+        }
+
         List<TCGPCard> exCards = CardGameManager._instance.GetEXCardsByType((PokemonType)typeDropdown.value);
         if (exCards == null || exCards.Count == 0)
         {
@@ -237,11 +247,12 @@ public class DeckListManager : MonoBehaviour
         }
 
         var distinctNames = exCards.Select(card => card.name).Distinct().ToList();
-        if (index >= distinctNames.Count) return;
+        int adjustedIndex = index - 1;
 
-        string selectedName = distinctNames[index];
+        if (adjustedIndex >= distinctNames.Count) return;
+
+        string selectedName = distinctNames[adjustedIndex];
         CardGameManager._instance.deckPreferences.anchorCard = exCards.FirstOrDefault(c => c.name == selectedName) ?? exCards[0];
-
     }
     public void ClearAllDecks()
     {
