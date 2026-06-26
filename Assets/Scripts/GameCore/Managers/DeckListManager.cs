@@ -85,6 +85,7 @@ public class DeckListManager : MonoBehaviour
 
     public void GenerateDeck()
     {
+        AudioManager._instance.PlaySFX("AButton");
         CardGameManager._instance.CreateDeck();
 
         deckGenerationWindow.SetActive(true);
@@ -93,6 +94,7 @@ public class DeckListManager : MonoBehaviour
 
     public void CloseGeneratedDeckWindow()
     {
+        AudioManager._instance.PlaySFX("ReturnButton");
         deckGenerationWindow.SetActive(false);
     }
 
@@ -119,6 +121,7 @@ public class DeckListManager : MonoBehaviour
             savedDeck.cardIDs.Add(card.id);
         }
 
+        AudioManager._instance.PlaySFX("AButton");
         DeckSaveSystem.SaveDeck(savedDeck);
 
 
@@ -190,6 +193,7 @@ public class DeckListManager : MonoBehaviour
         }
 
         CardGameManager._instance.currentDeck = selectedDeck.cards;
+        AudioManager._instance.PlaySFX("DeckSelected");
 
         PopulateCardView(selectedDeck.cards, cardContentParent);
     }
@@ -257,6 +261,7 @@ public class DeckListManager : MonoBehaviour
     public void ClearAllDecks()
     {
         DeckSaveSystem.DeleteAllDecks();
+        AudioManager._instance.PlaySFX("ReturnButton");
 
         lightweightDecks.Clear();
         deckList.Clear();
