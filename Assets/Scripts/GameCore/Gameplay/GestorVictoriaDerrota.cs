@@ -117,6 +117,12 @@ public class GestorVictoriaDerrota : MonoBehaviour
         Debug.Log($"[Bucle] Iniciando espera. TurnosTotales={red?.TurnosTotales}");
         yield return new WaitUntil(() => red != null && red.TurnosTotales >= 2);
 
+        // Esperar además a que ambas zonas activas tengan al menos un Pokémon
+        yield return new WaitUntil(() =>
+            ContarPokemonesEnContenedor(zonaActivaJ1) > 0 &&
+            ContarPokemonesEnContenedor(zonaActivaJ2) > 0
+        );
+
         Debug.Log("Fase de preparación terminada. Activando escáner de condiciones de victoria/derrota.");
 
         while (!juegoTerminado)
@@ -133,6 +139,9 @@ public class GestorVictoriaDerrota : MonoBehaviour
         int activoJ1 = ContarPokemonesEnContenedor(zonaActivaJ1);
         int activoJ2 = ContarPokemonesEnContenedor(zonaActivaJ2);
         int enBanca = ContarPokemonesEnContenedor(bancaJ1);
+
+        Debug.Log($"[Verificación] activoJ1={activoJ1} activoJ2={activoJ2} enBanca={enBanca}");
+
 
         // Un jugador pierde si su zona activa está vacía y no hay nada en banca
         bool j1SinPokemon = activoJ1 == 0 && enBanca == 0;
