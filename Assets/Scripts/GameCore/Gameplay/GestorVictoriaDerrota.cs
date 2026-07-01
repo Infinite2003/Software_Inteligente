@@ -17,33 +17,71 @@ public class GestorVictoriaDerrota : MonoBehaviour
     [SerializeField] private Transform zonaCartaJugada;
     [SerializeField] private Transform zonaBanca;
 
-    private ControladorTurnos sistemaTurnos;
     private SincronizadorRed red;
     private bool juegoTerminado = false;
-    private bool _ultimoEstadoTurno;
+
+    // Guardamos las lambdas para poder desuscribirnos correctamente en OnDestroy
+    private System.Action<ulong, ulong> _onTurnoCambiado;
+    private System.Action _onRivalPerdio;
 
     void Start()
     {
+        Debug.Log($"[GestorVictoriaDerrota] Start en '{gameObject.name}' | InstanceID={gameObject.GetInstanceID()} | Parent={transform.parent?.name ?? "ninguno"}");
         if (objetoVictoria != null) objetoVictoria.SetActive(false);
         if (objetoDerrota != null) objetoDerrota.SetActive(false);
         if (botonRegresar != null) botonRegresar.SetActive(false);
 
-        sistemaTurnos = Object.FindFirstObjectByType<ControladorTurnos>();
-
-        StartCoroutine(BucleMonitoreoPartida());
+        // FIX: Siempre esperamos al sincronizador antes de hacer cualquier cosa
+        StartCoroutine(EsperarSincronizador());
     }
 
     private IEnumerator EsperarSincronizador()
     {
+        Debug.Log("[Sincronizador] Esperando SincronizadorRed...");
         yield return new WaitUntil(() => SincronizadorRed.Instancia != null);
-
+        Debug.Log("[Sincronizador] SincronizadorRed encontrado. Iniciando bucle.");
         red = SincronizadorRed.Instancia;
 
-        // Escuchamos el evento de que el rival perdió (nos toca mostrar victoria)
-        red.OnRivalPerdio += () => DefinirResultadoLocal(true);
+        yield return null;
 
-        if (sistemaTurnos != null)
-            _ultimoEstadoTurno = sistemaTurnos.EsMiTurno();
+        ZonaTablero[] zonas = Object.FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None);
+        bool soyHost = Unity.Netcode.NetworkManager.Singleton.IsHost;
+
+        foreach (var z in zonas)
+        {
+            if (z.gameObject.name.Contains("_J1"))
+                z.ForzarConfiguracion(true, true);
+            else if (z.gameObject.name.Contains("_J2"))
+                z.ForzarConfiguracion(false, true);
+        }
+
+        // Ahora buscar la zona correcta
+        foreach (var z in zonas)
+        {
+            if (z.EsActivo() && z.EsMiZona())
+            {
+                zonaCartaJugada = z.transform;
+                Debug.Log($"[Gestor] Zona encontrada: {z.gameObject.name}");
+            }
+        }
+
+        Debug.Log($"[Gestor] IsHost={Unity.Netcode.NetworkManager.Singleton.IsHost} | " +
+          $"zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name : "NULL")}");
+
+        if (zonaCartaJugada == null)
+            Debug.LogWarning("[GestorVictoriaDerrota] No se encontró zona activa local.");
+
+        _onTurnoCambiado = (anterior, nuevo) =>
+        {
+            if (anterior == ulong.MaxValue) return;
+            if (red.IsServer)
+                red.IncrementarTurnosTranscurridos();
+        };
+
+        _onRivalPerdio = () => DefinirResultadoLocal(true);
+
+        red.OnTurnoCambiado += _onTurnoCambiado;
+        red.OnRivalPerdio += _onRivalPerdio;
 
         StartCoroutine(BucleMonitoreoPartida());
     }
@@ -51,26 +89,15 @@ public class GestorVictoriaDerrota : MonoBehaviour
     void OnDestroy()
     {
         if (red != null)
-            red.OnRivalPerdio -= () => DefinirResultadoLocal(true);
-    }
-
-    void Update()
-    {
-        // Solo el servidor lleva la cuenta de turnos transcurridos
-        if (red == null || sistemaTurnos == null || juegoTerminado) return;
-        if (!red.IsServer) return;
-
-        bool turnoActual = sistemaTurnos.EsMiTurno();
-        if (turnoActual != _ultimoEstadoTurno)
         {
-            _ultimoEstadoTurno = turnoActual;
-            red.IncrementarTurnosTranscurridos();
+            if (_onTurnoCambiado != null) red.OnTurnoCambiado -= _onTurnoCambiado;
+            if (_onRivalPerdio != null) red.OnRivalPerdio -= _onRivalPerdio;
         }
     }
 
-
     private IEnumerator BucleMonitoreoPartida()
     {
+        Debug.Log($"[Bucle] Iniciando espera. TurnosTotales={red?.TurnosTotales}");
         yield return new WaitUntil(() => red != null && red.TurnosTotales >= 2);
 
         Debug.Log("Fase de preparación terminada. Activando escáner de condiciones de victoria/derrota.");
@@ -78,20 +105,21 @@ public class GestorVictoriaDerrota : MonoBehaviour
         while (!juegoTerminado)
         {
             VerificarCondicionDeVida();
-
             yield return new WaitForSeconds(1.0f);
         }
     }
 
     public void VerificarCondicionDeVida()
     {
+        Debug.Log($"[Verificación] zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name + " hijos:" + zonaCartaJugada.childCount : "NULL")} | zonaBanca={(zonaBanca != null ? zonaBanca.name + " hijos:" + zonaBanca.childCount : "NULL")}");
         if (juegoTerminado) return;
+
+        //Debug.Log($"[Verificación] zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name + " hijos:" + zonaCartaJugada.childCount : "NULL")} | " + $"zonaBanca={(zonaBanca != null ? zonaBanca.name + " hijos:" + zonaBanca.childCount : "NULL")}");
 
         int pokemonEnActivo = ContarPokemonesEnContenedor(zonaCartaJugada);
         int pokemonEnBanca = ContarPokemonesEnContenedor(zonaBanca);
 
-        Debug.Log($"[Verificación] ClientId={Unity.Netcode.NetworkManager.Singleton.LocalClientId} | " +
-                  $"Activo={pokemonEnActivo} | Banca={pokemonEnBanca}");
+        //Debug.Log($"[Verificación] ClientId={Unity.Netcode.NetworkManager.Singleton.LocalClientId} | " + $"Activo={pokemonEnActivo} | Banca={pokemonEnBanca}");
 
         if (pokemonEnActivo == 0 && pokemonEnBanca == 0)
         {

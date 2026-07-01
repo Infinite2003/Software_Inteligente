@@ -293,7 +293,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                 canvasGroup.blocksRaycasts = false; // Desactivamos interacci�n mientras se procesa
 
                 // �ACTIVAMOS EL TEMPORIZADOR DE 10 SEGUNDOS AL CEMENTERIO!
-                StartCoroutine(TemporizadorMandarAlCementerio(10f));
+                //StartCoroutine(TemporizadorMandarAlCementerio(10f));
                 canvasGroup.blocksRaycasts = false;
                 Debug.Log("Pokémon Activo colocado: " + pokemonInstance.data.name);
                 return;

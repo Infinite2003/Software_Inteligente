@@ -1135,7 +1135,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 133c4f2f41ddae948bfc98bdae2db98e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZonaTablero
-  ShowTopMostFoldoutHeaderGroup: 1
   esDelHost: 1
   esActivo: 1
 --- !u!114 &583510175
@@ -1479,7 +1478,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 777637955}
-    PlayerPrefab: {fileID: 1648342986}
+    PlayerPrefab: {fileID: 0}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: bc3bcd525bca62047aedd9a8c9b435fe, type: 2}
@@ -2900,9 +2899,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1648342990}
-  - component: {fileID: 1648342989}
   - component: {fileID: 1648342988}
   - component: {fileID: 1648342987}
+  - component: {fileID: 1648342991}
   m_Layer: 5
   m_Name: GameManager
   m_TagString: Untagged
@@ -2944,31 +2943,6 @@ MonoBehaviour:
   botonPasarTurno: {fileID: 248007441}
   zonaCartaJugada: {fileID: 0}
   zonaBanca: {fileID: 1943838742}
---- !u!114 &1648342989
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1648342986}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3558830575
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!224 &1648342990
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2988,6 +2962,31 @@ RectTransform:
   m_AnchoredPosition: {x: -26, y: 0}
   m_SizeDelta: {x: 130, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1648342991
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1648342986}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 443764266
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1 &1889281181
 GameObject:
   m_ObjectHideFlags: 0
@@ -3175,7 +3174,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 133c4f2f41ddae948bfc98bdae2db98e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZonaTablero
-  ShowTopMostFoldoutHeaderGroup: 1
   esDelHost: 0
   esActivo: 1
 --- !u!114 &1913988919

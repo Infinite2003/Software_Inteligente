@@ -45,6 +45,7 @@ public class ZonaTablero : MonoBehaviour
             return esDelHost;
 
         bool soyHost = Unity.Netcode.NetworkManager.Singleton.IsHost;
+        Debug.Log($"[ZonaTablero] '{gameObject.name}' | soyHost={soyHost} | esDelHost={esDelHost} | resultado={soyHost == esDelHost}");
         return soyHost == esDelHost;
     }
 
@@ -76,5 +77,11 @@ public class ZonaTablero : MonoBehaviour
         pokemonEnZona.TakeDamage(cantidad);
         hpActual = pokemonEnZona.currentHP;
         Debug.Log($"[ZonaTablero] '{gameObject.name}' recibió {cantidad} de daño. HP restante: {hpActual}");
+    }
+
+    public void ForzarConfiguracion(bool delHost, bool activo)
+    {
+        esDelHost = delHost;
+        esActivo = activo;
     }
 }
