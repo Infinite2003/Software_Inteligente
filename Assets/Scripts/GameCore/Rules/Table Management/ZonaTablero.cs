@@ -13,6 +13,8 @@ public class ZonaTablero : MonoBehaviour
     private int energiaActual = 0;
     private string idCarta = "";
 
+    public bool EsDelHost => esDelHost;
+
     void Awake()
     {
         string nombre = gameObject.name;

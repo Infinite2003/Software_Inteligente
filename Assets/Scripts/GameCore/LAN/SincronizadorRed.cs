@@ -96,9 +96,12 @@ public class SincronizadorRed : NetworkBehaviour
     }
 
     [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-    public void NotificarDerrotaServerRpc()
+    public void NotificarDerrotaServerRpc(ulong clientIdPerdedor, RpcParams rpcParams = default)
     {
-        NotificarVictoriaRivalClientRpc();
+        // El ganador es el otro jugador
+        var ids = NetworkManager.Singleton.ConnectedClientsIds;
+        ulong ganador = (ids[0] == clientIdPerdedor) ? ids[1] : ids[0];
+        NotificarResultadoClientRpc(ganador);
     }
 
     [Rpc(SendTo.ClientsAndHost)]
@@ -107,5 +110,14 @@ public class SincronizadorRed : NetworkBehaviour
         // Solo el que NO envió la notificación recibe la victoria
         if (NetworkManager.Singleton.LocalClientId != jugadorActualTurno.Value)
             OnRivalPerdio?.Invoke();
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void NotificarResultadoClientRpc(ulong clientIdGanador)
+    {
+        bool yoGane = clientIdGanador == NetworkManager.Singleton.LocalClientId;
+        GestorVictoriaDerrota gestor = Object.FindFirstObjectByType<GestorVictoriaDerrota>();
+        if (gestor != null)
+            gestor.DefinirResultadoLocal(yoGane);
     }
 }

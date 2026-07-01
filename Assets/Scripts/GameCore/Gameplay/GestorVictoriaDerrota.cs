@@ -17,6 +17,11 @@ public class GestorVictoriaDerrota : MonoBehaviour
     [SerializeField] private Transform zonaCartaJugada;
     [SerializeField] private Transform zonaBanca;
 
+    private Transform zonaActivaJ1;
+    private Transform zonaActivaJ2;
+    private Transform bancaJ1;
+    private Transform bancaJ2;
+
     private SincronizadorRed red;
     private bool juegoTerminado = false;
 
@@ -39,21 +44,26 @@ public class GestorVictoriaDerrota : MonoBehaviour
     {
         Debug.Log("[Sincronizador] Esperando SincronizadorRed...");
         yield return new WaitUntil(() => SincronizadorRed.Instancia != null);
-        Debug.Log("[Sincronizador] SincronizadorRed encontrado. Iniciando bucle.");
         red = SincronizadorRed.Instancia;
+        yield return new WaitForSeconds(0.5f);
 
-        yield return null;
-
+        // En EsperarSincronizador, reemplaza la asignación de bancas por esto:
         ZonaTablero[] zonas = Object.FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None);
-        bool soyHost = Unity.Netcode.NetworkManager.Singleton.IsHost;
+        Transform bancaCompartida = null;
 
         foreach (var z in zonas)
         {
-            if (z.gameObject.name.Contains("_J1"))
-                z.ForzarConfiguracion(true, true);
-            else if (z.gameObject.name.Contains("_J2"))
-                z.ForzarConfiguracion(false, true);
+            if (z.gameObject.name == "CartaJugada_J1") zonaActivaJ1 = z.transform;
+            if (z.gameObject.name == "CartaJugada_J2") zonaActivaJ2 = z.transform;
+            if (z.gameObject.name == "Banca") bancaCompartida = z.transform;
         }
+
+        // Ambos jugadores comparten la misma banca visual por ahora
+        bancaJ1 = bancaCompartida;
+        bancaJ2 = bancaCompartida;
+
+        Debug.Log($"[Gestor] J1: activo={zonaActivaJ1?.name} banca={bancaJ1?.name} | " +
+                  $"J2: activo={zonaActivaJ2?.name} banca={bancaJ2?.name}");
 
         ulong id = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
 
@@ -118,22 +128,33 @@ public class GestorVictoriaDerrota : MonoBehaviour
 
     public void VerificarCondicionDeVida()
     {
-        Debug.Log($"[Verificación] zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name + " hijos:" + zonaCartaJugada.childCount : "NULL")} | zonaBanca={(zonaBanca != null ? zonaBanca.name + " hijos:" + zonaBanca.childCount : "NULL")}");
         if (juegoTerminado) return;
 
-        //Debug.Log($"[Verificación] zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name + " hijos:" + zonaCartaJugada.childCount : "NULL")} | " + $"zonaBanca={(zonaBanca != null ? zonaBanca.name + " hijos:" + zonaBanca.childCount : "NULL")}");
+        int activoJ1 = ContarPokemonesEnContenedor(zonaActivaJ1);
+        int activoJ2 = ContarPokemonesEnContenedor(zonaActivaJ2);
+        int enBanca = ContarPokemonesEnContenedor(bancaJ1);
 
-        int pokemonEnActivo = ContarPokemonesEnContenedor(zonaCartaJugada);
-        int pokemonEnBanca = ContarPokemonesEnContenedor(zonaBanca);
+        // Un jugador pierde si su zona activa está vacía y no hay nada en banca
+        bool j1SinPokemon = activoJ1 == 0 && enBanca == 0;
+        bool j2SinPokemon = activoJ2 == 0 && enBanca == 0;
 
-        //Debug.Log($"[Verificación] ClientId={Unity.Netcode.NetworkManager.Singleton.LocalClientId} | " + $"Activo={pokemonEnActivo} | Banca={pokemonEnBanca}");
+        if (!j1SinPokemon && !j2SinPokemon) return;
 
-        if (pokemonEnActivo == 0 && pokemonEnBanca == 0)
-        {
-            Debug.Log("[Derrota] Sin Pokémon en juego.");
-            DefinirResultadoLocal(false);
-            red.NotificarDerrotaServerRpc();
-        }
+        var ids = Unity.Netcode.NetworkManager.Singleton.ConnectedClientsIds;
+        if (ids.Count < 2) return;
+
+        ulong perdedor;
+
+        if (j1SinPokemon && j2SinPokemon)
+            perdedor = Unity.Netcode.NetworkManager.Singleton.LocalClientId; // empate = todos pierden
+        else if (j1SinPokemon)
+            perdedor = ids[0]; // J1 perdió
+        else
+            perdedor = ids[1]; // J2 perdió
+
+        // Solo el servidor o el que detectó notifica, para evitar llamadas dobles
+        if (!juegoTerminado)
+            red.NotificarDerrotaServerRpc(perdedor);
     }
 
     private int ContarPokemonesEnContenedor(Transform contenedor)

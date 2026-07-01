@@ -1,14 +1,16 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using System.Collections; // REQUISITO: Necesario para usar Corrutinas (WaitForSeconds)
+using System.Collections;
 
 public static class EstadoTableroLocal
 {
-    public static System.Collections.Generic.Dictionary<ulong, bool> yaHuboPokemonActivo = new System.Collections.Generic.Dictionary<ulong, bool>();
+    public static System.Collections.Generic.Dictionary<ulong, bool> yaHuboPokemonActivo =
+        new System.Collections.Generic.Dictionary<ulong, bool>();
 }
 
-public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,
+    IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     private Vector3 escalaOriginal;
     private bool estaSobreLaCarta = false;
@@ -20,15 +22,15 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private CanvasGroup canvasGroup;
     private RectTransform rectTransform;
     private Canvas canvasGlobal;
-
     private Canvas canvasInterno;
     private UnityEngine.UI.GraphicRaycaster raycasterInterno;
-
     private CardTablero cardtablero;
 
     [SerializeField] private float distanciaDeteccion = 150f;
 
     public PokemonInstance pokemonInstance;
+
+    // ── Inicio ────────────────────────────────────────────────────────────────
 
     void Start()
     {
@@ -38,86 +40,110 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         canvasGroup = GetComponent<CanvasGroup>();
         if (canvasGroup == null)
-        {
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
-        }
 
         canvasGlobal = GetComponentInParent<Canvas>();
 
         canvasInterno = GetComponent<Canvas>();
         if (canvasInterno == null)
-        {
             canvasInterno = gameObject.AddComponent<Canvas>();
-        }
 
-        raycasterInterno = GetComponent<UnityEngine.UI.GraphicRaycaster>();
-        if (raycasterInterno == null)
-        {
-            raycasterInterno = gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
-        }
+        if (GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
+            gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
 
         if (GetComponent<UnityEngine.UI.RectMask2D>() == null)
-        {
             gameObject.AddComponent<UnityEngine.UI.RectMask2D>();
-        }
     }
+
+    // ── Helpers de estado ─────────────────────────────────────────────────────
 
     bool EstaEnMano()
     {
-        return transform.parent != null && (transform.parent.name.Contains("Mano") || transform.parent.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>() != null);
+        return transform.parent != null &&
+               (transform.parent.name.Contains("Mano") ||
+                transform.parent.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>() != null);
     }
 
-    bool EstaEnBanca()
-    {
-        return transform.parent != null && transform.parent.name == "Banca";
-    }
+    bool EstaEnBanca() => transform.parent != null && transform.parent.name == "Banca";
 
     bool EsCartaPokemon()
     {
-        if (cardtablero != null && cardtablero.cardData != null)
-        {
-            string categoria = cardtablero.cardData.category.ToString().Trim();
-            return categoria.Equals("Pokemon", System.StringComparison.OrdinalIgnoreCase);
-        }
-        return false;
+        if (cardtablero?.cardData == null) return false;
+        return cardtablero.cardData.category.ToString().Trim()
+               .Equals("Pokemon", System.StringComparison.OrdinalIgnoreCase);
     }
 
-    // Detecta si la carta actual es de categoría Trainer (Entrenador)
     bool EsCartaTrainer()
     {
-        if (cardtablero != null && cardtablero.cardData != null)
-        {
-            string categoria = cardtablero.cardData.category.ToString().Trim();
-            return categoria.Equals("Trainer", System.StringComparison.OrdinalIgnoreCase);
-        }
-        return false;
+        if (cardtablero?.cardData == null) return false;
+        return cardtablero.cardData.category.ToString().Trim()
+               .Equals("Trainer", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    bool MiYaHuboPokemonActivo()
+    {
+        ulong miId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+        return EstadoTableroLocal.yaHuboPokemonActivo.ContainsKey(miId) &&
+               EstadoTableroLocal.yaHuboPokemonActivo[miId];
+    }
+
+    void MarcarYaHuboPokemonActivo()
+    {
+        ulong miId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+        EstadoTableroLocal.yaHuboPokemonActivo[miId] = true;
     }
 
     private bool VerificarMouseEncimaReal()
     {
         Vector2 posicionMouse = Mouse.current.position.ReadValue();
-        return RectTransformUtility.RectangleContainsScreenPoint(rectTransform, posicionMouse, canvasGlobal.worldCamera);
+        return RectTransformUtility.RectangleContainsScreenPoint(
+            rectTransform, posicionMouse, canvasGlobal.worldCamera);
     }
+
+    /// <summary>
+    /// Devuelve true si el jugador local ya tiene un Pokémon en su zona activa.
+    /// Usa ZonaTablero si está disponible; cae a childCount como fallback.
+    /// </summary>
+    private bool HayPokemonActivo()
+    {
+        // Intento con ZonaTablero
+        foreach (var z in FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None))
+        {
+            if (z.EsActivo() && z.EsMiZona() && z.EstaOcupada())
+                return true;
+        }
+
+        // Fallback por nombre de GameObject
+        GameObject j1 = GameObject.Find("CartaJugada_J1");
+        GameObject j2 = GameObject.Find("CartaJugada_J2");
+        if (j1 != null && j1.transform.childCount > 0) return true;
+        if (j2 != null && j2.transform.childCount > 0) return true;
+
+        return false;
+    }
+
+    // ── Eventos de puntero ────────────────────────────────────────────────────
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (canvasInterno == null) return; // guarda de seguridad
         if (estaEnCementerio || estaSiendoArrastrada) return;
-        if (transform.parent != null && (transform.parent.name == "CartaJugada" || transform.parent.name == "Apoyo")) return;
+        if (transform.parent != null &&
+            (transform.parent.name.Contains("CartaJugada") || transform.parent.name == "Apoyo")) return;
         if (!EstaEnMano() && !estaEnTablero) return;
-
         if (!VerificarMouseEncimaReal()) return;
 
         estaSobreLaCarta = true;
-
         canvasInterno.overrideSorting = true;
         canvasInterno.sortingOrder = 100;
-
         transform.localScale = escalaOriginal * 1.2f;
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        if (transform.parent != null && (transform.parent.name == "CartaJugada" || transform.parent.name == "Apoyo") || estaSiendoArrastrada) return;
+        if (transform.parent != null &&
+            (transform.parent.name.Contains("CartaJugada") || transform.parent.name == "Apoyo") ||
+            estaSiendoArrastrada) return;
 
         estaSobreLaCarta = false;
         canvasInterno.overrideSorting = false;
@@ -137,8 +163,8 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         if (estaEnCementerio) return;
 
-        // Si la carta ya está en la zona de juego o en Apoyo, bloqueamos que se pueda volver a arrastrar
-        if (transform.parent != null && (transform.parent.name == "CartaJugada" || transform.parent.name == "Apoyo"))
+        if (transform.parent != null &&
+            (transform.parent.name.Contains("CartaJugada") || transform.parent.name == "Apoyo"))
         {
             eventData.pointerDrag = null;
             return;
@@ -148,7 +174,6 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         estaSiendoArrastrada = true;
         estaSobreLaCarta = false;
-
         padreOriginal = transform.parent;
         transform.SetParent(canvasGlobal.transform);
         canvasGroup.blocksRaycasts = false;
@@ -170,8 +195,8 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
         canvasInterno.overrideSorting = false;
         canvasInterno.sortingOrder = 0;
 
+        // ── Buscar la zona activa del jugador local via ZonaTablero ──────────
         ZonaTablero zonaActivaLocal = null;
-
         foreach (var z in FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None))
         {
             if (z.EsMiZona() && z.EsActivo())
@@ -181,14 +206,11 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
             }
         }
 
-        GameObject zonaCartaJugada =
-            zonaActivaLocal != null ? zonaActivaLocal.gameObject : null;
+        GameObject zonaCartaJugada = zonaActivaLocal != null ? zonaActivaLocal.gameObject : null;
         GameObject zonaBanca = GameObject.Find("Banca");
         GameObject zonaApoyo = GameObject.Find("Apoyo");
 
-        bool cartaJugadaEstaVacia = (zonaCartaJugada != null && zonaCartaJugada.transform.childCount == 0);
-
-        // ── Distancias a cada zona ────────────────────────────────────────────
+        // ── Distancias ───────────────────────────────────────────────────────
         float distanciaAActivo = zonaCartaJugada != null
             ? Vector3.Distance(transform.position, zonaCartaJugada.transform.position)
             : float.MaxValue;
@@ -199,33 +221,17 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
             ? Vector3.Distance(transform.position, zonaApoyo.transform.position)
             : float.MaxValue;
 
-        Debug.Log($"[Drag] zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name : "NULL")} | " +
-          $"zonaBanca={(zonaBanca != null ? zonaBanca.name : "NULL")} | " +
-          $"zonaApoyo={(zonaApoyo != null ? zonaApoyo.name : "NULL")} | " +
-          $"distActivo={distanciaAActivo:F0} | distBanca={distanciaABanca:F0} | distApoyo={distanciaAApoyo:F0} | " +
-          $"deteccion={distanciaDeteccion}");
+        Debug.Log($"[Drag] activo={(zonaCartaJugada?.name ?? "NULL")} " +
+                  $"dActivo={distanciaAActivo:F0} dBanca={distanciaABanca:F0} " +
+                  $"dApoyo={distanciaAApoyo:F0} deteccion={distanciaDeteccion}");
 
-        // ── ZONA DE APOYO ─────────────────────────────────────────────────────
+        // ── ZONA DE APOYO ────────────────────────────────────────────────────
         if (distanciaAApoyo <= distanciaDeteccion &&
             distanciaAApoyo < distanciaAActivo &&
             distanciaAApoyo < distanciaABanca)
         {
             if (!EsCartaTrainer())
             {
-                // REGLA: �Solo cartas Trainer (Entrenador) pueden ir a Apoyo!
-                if (!EsCartaTrainer())
-                {
-                    Debug.LogWarning("�Acci�n inv�lida! Solo cartas de tipo Trainer pueden usarse en Apoyo.");
-                    RegresarAPadreOriginal();
-                    return;
-                }
-
-                if (zonaApoyo.transform.childCount > 0)
-                {
-                    Debug.LogWarning("La zona de Apoyo ya est� ocupada procesando otro efecto.");
-                    RegresarAPadreOriginal();
-                    return;
-                }
                 Debug.LogWarning("¡Solo cartas Trainer pueden usarse en Apoyo!");
                 RegresarAPadreOriginal();
                 return;
@@ -245,7 +251,7 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
             return;
         }
 
-        // ── ZONA ACTIVA (CartaJugada) ─────────────────────────────────────────
+        // ── ZONA ACTIVA ──────────────────────────────────────────────────────
         if (distanciaAActivo < distanciaABanca && distanciaAActivo <= distanciaDeteccion)
         {
             if (zonaCartaJugada == null)
@@ -261,132 +267,39 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                 return;
             }
 
-            bool zonaOcupada = zonaActivaLocal != null && zonaActivaLocal.EstaOcupada();
-
-
-
-            if (zonaOcupada)
+            if (zonaActivaLocal != null && zonaActivaLocal.EstaOcupada())
             {
                 Debug.LogWarning("La zona Activa ya está ocupada.");
                 RegresarAPadreOriginal();
                 return;
             }
 
-            bool vieneDeBanca = (padreOriginal.name == "Banca");
-            bool vieneDeMano = (padreOriginal.name.Contains("Mano") ||
-                                 padreOriginal.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>() != null);
+            bool vieneDeBanca = padreOriginal.name == "Banca";
+            bool vieneDeMano = padreOriginal.name.Contains("Mano") ||
+                                padreOriginal.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>() != null;
 
-            // 🔴 CAMBIO 3: Eliminada condición !yaHuboPokemonActivo
-            bool puedeIrAlActivo = vieneDeMano || vieneDeBanca;
-
-            if (puedeIrAlActivo)
+            if (vieneDeMano || vieneDeBanca)
             {
                 MoverAContenedor(zonaCartaJugada.transform);
-
-                // 🔴 CAMBIO 4: Crear PokemonInstance ANTES de usarlo
                 pokemonInstance = new PokemonInstance(cardtablero.cardData);
-
-                if (zonaActivaLocal != null)
-                    zonaActivaLocal.ColocarPokemon(cardtablero.cardData);
-
+                zonaActivaLocal?.ColocarPokemon(cardtablero.cardData);
+                MarcarYaHuboPokemonActivo();
                 estaEnTablero = true;
-                canvasGroup.blocksRaycasts = false; // Desactivamos interacci�n mientras se procesa
-
-                // �ACTIVAMOS EL TEMPORIZADOR DE 10 SEGUNDOS AL CEMENTERIO!
-                //StartCoroutine(TemporizadorMandarAlCementerio(10f));
                 canvasGroup.blocksRaycasts = false;
                 Debug.Log("Pokémon Activo colocado: " + pokemonInstance.data.name);
                 return;
             }
-            else
-            {
-                Debug.LogWarning("Nuevos atacantes deben venir de la Banca.");
-                RegresarAPadreOriginal();
-                return;
-            }
+
+            Debug.LogWarning("Nuevos atacantes deben venir de la Banca.");
+            RegresarAPadreOriginal();
+            return;
         }
 
-        // ── BANCA ─────────────────────────────────────────────────────────────
+        // ── BANCA ────────────────────────────────────────────────────────────
         if (distanciaABanca <= distanciaDeteccion)
         {
             if (zonaBanca == null)
             {
-                if (!EsCartaPokemon())
-                {
-                    Debug.LogWarning("Acción invalida! Solo cartas de tipo Pokémon pueden ser el Activo.");
-                    RegresarAPadreOriginal();
-                    return;
-                }
-
-                if (!cartaJugadaEstaVacia)
-                {
-                    Debug.LogWarning("La zona 'CartaJugada' ya está ocupada.");
-                    RegresarAPadreOriginal();
-                    return;
-                }
-
-                bool vieneDeBanca = (padreOriginal.name == "Banca");
-                bool vieneDeMano = (padreOriginal.name.Contains("Mano") || padreOriginal.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>() != null);
-
-                if (vieneDeBanca || (vieneDeMano && !MiYaHuboPokemonActivo()))
-                {
-                    MoverAContenedor(zonaCartaJugada.transform);
-
-                    if(pokemonInstance == null)
-                    {
-
-                        pokemonInstance = new PokemonInstance(cardtablero.cardData);
-                    }
-
-                    estaEnTablero = true;
-                    Debug.Log("Pokemon Activo: " + pokemonInstance.data.name);
-                    MarcarYaHuboPokemonActivo();
-                    canvasGroup.blocksRaycasts = false;
-                    return;
-                }
-                else
-                {
-                    Debug.LogWarning("Nuevos atacantes deben venir obligatoriamente de la Banca.");
-                    RegresarAPadreOriginal();
-                    return;
-                }
-            }
-        }
-        // LA BANCA
-        else if (distanciaABanca <= distanciaDeteccion)
-        {
-            if (zonaBanca != null)
-            {
-                if (!EsCartaPokemon())
-                {
-                    Debug.LogWarning("�Acci�n inv�lida! Las cartas de Entrenador o Energ�a no van en la Banca.");
-                    RegresarAPadreOriginal();
-                    return;
-                }
-
-                if (cartaJugadaEstaVacia && !MiYaHuboPokemonActivo())
-                {
-                    Debug.LogWarning("Tu primer Pok�mon DEBE ser el Activo en 'CartaJugada'.");
-                    RegresarAPadreOriginal();
-                    return;
-                }
-
-                if (padreOriginal.name == "Banca" || zonaBanca.transform.childCount >= 5)
-                {
-                    RegresarAPadreOriginal();
-                    return;
-                }
-
-                MoverAContenedor(zonaBanca.transform);
-
-                if(pokemonInstance == null)
-                {
-
-                    pokemonInstance = new PokemonInstance(cardtablero.cardData);
-                }
-
-                estaEnTablero = true;
-                Debug.Log("Pokemon enviado a banca: " + pokemonInstance.data.name);
                 RegresarAPadreOriginal();
                 return;
             }
@@ -398,14 +311,15 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
                 return;
             }
 
-            bool hayActivo = zonaActivaLocal != null && zonaActivaLocal.EstaOcupada();
-            if (!hayActivo)
+            // Debe haber un Pokémon activo antes de poder poner en banca
+            if (!HayPokemonActivo())
             {
                 Debug.LogWarning("Tu primer Pokémon DEBE ser el Activo.");
                 RegresarAPadreOriginal();
                 return;
             }
 
+            // No se puede mover una carta que ya está en banca, ni superar 5
             if (padreOriginal.name == "Banca" || zonaBanca.transform.childCount >= 5)
             {
                 RegresarAPadreOriginal();
@@ -413,22 +327,12 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
             }
 
             MoverAContenedor(zonaBanca.transform);
-
-            // 🔴 CAMBIO 5: Crear PokemonInstance siempre
             pokemonInstance = new PokemonInstance(cardtablero.cardData);
 
-            // 🔴 CAMBIO 6: Notificar a ZonaTablero del slot de banca
-            ZonaTablero[] bancaZonas = FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None);
-            Debug.Log($"[Drag] ZonaTablero encontradas: {bancaZonas.Length}");
+            // Notificar a ZonaTablero de banca si existe
             foreach (var z in FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None))
             {
-                Debug.Log($"[ZonaTablero] '{z.gameObject.name}' | EsMiZona={z.EsMiZona()} | " +
-                          $"EsActivo={z.EsActivo()} | EstaOcupada={z.EstaOcupada()} | " +
-                          $"IsHost={Unity.Netcode.NetworkManager.Singleton.IsHost}");
-            }
-            foreach (var z in bancaZonas)
-            {
-                if (z.EsMiZona() && z.gameObject.name.Contains("Banca") && !z.EstaOcupada())
+                if (z.EsMiZona() && !z.EsActivo() && !z.EstaOcupada())
                 {
                     z.ColocarPokemon(cardtablero.cardData);
                     break;
@@ -443,7 +347,8 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
         RegresarAPadreOriginal();
     }
 
-    // CORRUTINA: Cuenta el tiempo en segundo plano y desecha la carta de apoyo de forma segura
+    // ── Corrutina Apoyo ───────────────────────────────────────────────────────
+
     private IEnumerator TemporizadorMandarAlCementerio(float segundos)
     {
         yield return new WaitForSeconds(segundos);
@@ -451,12 +356,9 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
         GameObject cementerio = GameObject.Find("Cementerio");
         if (cementerio != null)
         {
-            Debug.Log($"El efecto de {gameObject.name} terminó. Moviendo al cementerio.");
-
-            canvasGroup.blocksRaycasts = true; // Devolvemos la capacidad de interactuar por si revive
+            canvasGroup.blocksRaycasts = true;
             canvasInterno.overrideSorting = false;
             canvasInterno.sortingOrder = 0;
-
             MoverAContenedor(cementerio.transform);
             estaEnTablero = false;
             estaEnCementerio = true;
@@ -465,15 +367,14 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
         }
         else
         {
-            Debug.LogError("No se encontró el objeto 'Cementerio' en la escena para descartar el Apoyo.");
+            Debug.LogError("No se encontró 'Cementerio' en la escena.");
             RegresarAPadreOriginal();
         }
     }
 
-    void RegresarAPadreOriginal()
-    {
-        MoverAContenedor(padreOriginal);
-    }
+    void RegresarAPadreOriginal() => MoverAContenedor(padreOriginal);
+
+    // ── Update ────────────────────────────────────────────────────────────────
 
     void Update()
     {
@@ -481,8 +382,8 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         bool actualmenteEncima = VerificarMouseEncimaReal();
 
-        // Bloqueamos animaciones de escala si está en CartaJugada o Apoyo
-        if (transform.parent != null && (transform.parent.name == "CartaJugada" || transform.parent.name == "Apoyo"))
+        if (transform.parent != null &&
+            (transform.parent.name.Contains("CartaJugada") || transform.parent.name == "Apoyo"))
         {
             if (actualmenteEncima && !estaSobreLaCarta)
             {
@@ -523,32 +424,17 @@ public class CartaInteractiva : MonoBehaviour, IPointerEnterHandler, IPointerExi
         }
     }
 
+    // ── MoverAContenedor ──────────────────────────────────────────────────────
+
     void MoverAContenedor(Transform nuevoPadre)
     {
         transform.SetParent(nuevoPadre);
-
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         rectTransform.pivot = new Vector2(0.5f, -0.2f);
-
         rectTransform.anchoredPosition = Vector2.zero;
         rectTransform.localPosition = Vector3.zero;
         rectTransform.localRotation = Quaternion.identity;
         rectTransform.localScale = Vector3.one;
-    }
-
-    // Helper para leer
-    bool MiYaHuboPokemonActivo()
-    {
-        ulong miId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
-        return EstadoTableroLocal.yaHuboPokemonActivo.ContainsKey(miId)
-               && EstadoTableroLocal.yaHuboPokemonActivo[miId];
-    }
-
-    // Helper para escribir
-    void MarcarYaHuboPokemonActivo()
-    {
-        ulong miId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
-        EstadoTableroLocal.yaHuboPokemonActivo[miId] = true;
     }
 }
