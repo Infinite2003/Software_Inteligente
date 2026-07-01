@@ -55,15 +55,22 @@ public class GestorVictoriaDerrota : MonoBehaviour
                 z.ForzarConfiguracion(false, true);
         }
 
-        // Ahora buscar la zona correcta
+        ulong id = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+
         foreach (var z in zonas)
         {
-            if (z.EsActivo() && z.EsMiZona())
+            if (id == 0 && z.name == "CartaJugada_J1")
             {
                 zonaCartaJugada = z.transform;
-                Debug.Log($"[Gestor] Zona encontrada: {z.gameObject.name}");
+            }
+
+            if (id == 1 && z.name == "CartaJugada_J2")
+            {
+                zonaCartaJugada = z.transform;
             }
         }
+
+        Debug.Log($"[Gestor] LocalClientId={id} | Zona asignada={zonaCartaJugada?.name}");
 
         Debug.Log($"[Gestor] IsHost={Unity.Netcode.NetworkManager.Singleton.IsHost} | " +
           $"zonaCartaJugada={(zonaCartaJugada != null ? zonaCartaJugada.name : "NULL")}");

@@ -39,13 +39,19 @@ public class ZonaTablero : MonoBehaviour
 
     public bool EsMiZona()
     {
-        // Si la red no está activa (modo offline/editor), confiamos en el Inspector
-        if (Unity.Netcode.NetworkManager.Singleton == null ||
-            !Unity.Netcode.NetworkManager.Singleton.IsListening)
-            return esDelHost;
+        if (Unity.Netcode.NetworkManager.Singleton == null)
+            return false;
 
-        bool soyHost = Unity.Netcode.NetworkManager.Singleton.IsHost;
-        Debug.Log($"[ZonaTablero] '{gameObject.name}' | soyHost={soyHost} | esDelHost={esDelHost} | resultado={soyHost == esDelHost}");
+        ulong localId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+
+        Debug.Log(
+            $"[{gameObject.name}] LocalClientId={localId} " +
+            $"IsHost={Unity.Netcode.NetworkManager.Singleton.IsHost} " +
+            $"esDelHost={esDelHost}"
+        );
+
+        bool soyHost = localId == 0;
+
         return soyHost == esDelHost;
     }
 
