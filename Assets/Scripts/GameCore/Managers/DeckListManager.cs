@@ -257,6 +257,9 @@ public class DeckListManager : MonoBehaviour
 
         string selectedName = distinctNames[adjustedIndex];
         CardGameManager._instance.deckPreferences.anchorCard = exCards.FirstOrDefault(c => c.name == selectedName) ?? exCards[0];
+
+        if (selectedName.Equals("Pikachu ex", StringComparison.OrdinalIgnoreCase))
+            AudioManager._instance.PlaySFX("Pikachu");
     }
     public void ClearAllDecks()
     {
