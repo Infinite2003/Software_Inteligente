@@ -2902,6 +2902,7 @@ GameObject:
   - component: {fileID: 1648342988}
   - component: {fileID: 1648342987}
   - component: {fileID: 1648342991}
+  - component: {fileID: 1648342992}
   m_Layer: 5
   m_Name: GameManager
   m_TagString: Untagged
@@ -2987,6 +2988,22 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &1648342992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1648342986}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d101a0fae5876543b60521de3af9b5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Gestor_Batalla
+  btnAtacar: {fileID: 1364892410}
+  btnEnergia: {fileID: 1980129511}
+  btnRetirada: {fileID: 1477106848}
+  textoResultado: {fileID: 1235465168}
 --- !u!1 &1889281181
 GameObject:
   m_ObjectHideFlags: 0

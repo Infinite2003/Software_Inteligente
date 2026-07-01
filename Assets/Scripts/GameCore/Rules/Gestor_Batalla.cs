@@ -1,151 +1,291 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using Unity.Netcode;
-using static Unity.Netcode.RpcAttribute;
+using System.Collections;
 
 public class Gestor_Batalla : MonoBehaviour
 {
-    [Header("Zonas del Tablero")]
-    [SerializeField] private ZonaTablero zonaActivaLocal;
-    [SerializeField] private ZonaTablero zonaActivaRival;
-
-    [Header("UI")]
+    [Header("UI - Botones")]
     [SerializeField] private Button btnAtacar;
     [SerializeField] private Button btnEnergia;
     [SerializeField] private Button btnRetirada;
+
+    [Header("UI - Feedback")]
     [SerializeField] private TextMeshProUGUI textoResultado;
 
-    [SerializeField] private AttackSelectionUI attackUI;
-    
-    private bool energiaUsadaEsteTurno = false;
+    // ZonaTablero se busca en runtime, no desde el Inspector,
+    // porque depende de quién es el jugador local (Host o Cliente)
+    private ZonaTablero zonaActivaLocal;
+    private ZonaTablero zonaActivaRival;
 
     private ControladorTurnos controladorTurnos;
+    private bool energiaUsadaEsteTurno = false;
 
-    private bool esperandoSeleccionEnergia = false;
+    // ── Singleton de escena ───────────────────────────────────────────────────
+    public static Gestor_Batalla Instance { get; private set; }
 
+    void Awake()
+    {
+        Instance = this;
+    }
 
     void Start()
+    {
+        controladorTurnos = FindFirstObjectByType<ControladorTurnos>();
+
+        btnAtacar.onClick.AddListener(IntentarAtaque);
+        btnEnergia.onClick.AddListener(IntentarAdjuntarEnergia);
+        btnRetirada.onClick.AddListener(IntentarRetirada);
+
+        // Desactivamos botones hasta que la red esté lista y haya Pokémon en juego
+        DesactivarTodosBotones();
+
+        // Esperamos a que la red esté lista para buscar las zonas correctamente
+        StartCoroutine(EsperarRedYBuscarZonas());
+    }
+
+    // ── Inicialización de zonas ───────────────────────────────────────────────
+
+    private IEnumerator EsperarRedYBuscarZonas()
+    {
+        // Esperamos a que NetworkManager esté activo y escuchando
+        yield return new WaitUntil(() =>
+            Unity.Netcode.NetworkManager.Singleton != null &&
+            Unity.Netcode.NetworkManager.Singleton.IsListening);
+
+        // Un frame extra para que LocalClientId esté asignado
+        yield return new WaitForSeconds(0.5f);
+
+        BuscarZonas();
+    }
+
+    private void BuscarZonas()
     {
         ZonaTablero[] todasLasZonas = FindObjectsByType<ZonaTablero>(FindObjectsSortMode.None);
 
         foreach (var zona in todasLasZonas)
         {
+            // Solo nos interesan las zonas activas (no la banca)
+            if (!zona.EsActivo()) continue;
+
             if (zona.EsMiZona())
                 zonaActivaLocal = zona;
             else
                 zonaActivaRival = zona;
         }
 
-        controladorTurnos = FindFirstObjectByType<ControladorTurnos>();
-        btnAtacar.onClick.AddListener(IntentarAtaque);
-        btnEnergia.onClick.AddListener(IntentarAdjuntarEnergia);
-        btnRetirada.onClick.AddListener(IntentarRetirada);
+        Debug.Log($"[Gestor_Batalla] Local={zonaActivaLocal?.gameObject.name ?? "NULL"} " +
+                  $"| Rival={zonaActivaRival?.gameObject.name ?? "NULL"}");
+
+        ActualizarBotones();
     }
+
+    // ── Llamado por ControladorTurnos al inicio de cada turno ────────────────
 
     public void AlIniciarTurno()
     {
         energiaUsadaEsteTurno = false;
+
+        // Si las zonas no se encontraron aún, intentamos de nuevo
+        if (zonaActivaLocal == null || zonaActivaRival == null)
+            BuscarZonas();
+
+        ActualizarBotones();
+        MostrarFeedback("¡Es tu turno!");
+    }
+
+    // ── ATACAR ────────────────────────────────────────────────────────────────
+
+    private void IntentarAtaque()
+    {
+        if (!PuedoActuar()) return;
+
+        PokemonInstance atacante = zonaActivaLocal.pokemonEnZona;
+        PokemonInstance defensor = zonaActivaRival.pokemonEnZona;
+
+        if (atacante == null)
+        {
+            MostrarFeedback("No tienes Pokémon activo.");
+            return;
+        }
+
+        if (defensor == null)
+        {
+            MostrarFeedback("El rival no tiene Pokémon activo.");
+            return;
+        }
+
+        if (atacante.data.moves == null || atacante.data.moves.Count == 0)
+        {
+            MostrarFeedback($"{atacante.data.name} no tiene ataques.");
+            return;
+        }
+
+        // Por ahora usamos el primer ataque disponible con suficiente energía.
+        // Cuando tengas AttackSelectionUI, reemplaza esto por attackUI.ShowAttacks(...)
+        Move movimiento = null;
+        foreach (var mov in atacante.data.moves)
+        {
+            if (AttackSystem.CanUseMove(atacante, mov))
+            {
+                movimiento = mov;
+                break;
+            }
+        }
+
+        if (movimiento == null)
+        {
+            MostrarFeedback("No tienes energía suficiente para ningún ataque.");
+            return;
+        }
+
+        EjecutarAtaque(atacante, defensor, movimiento);
+    }
+
+    private void EjecutarAtaque(PokemonInstance atacante, PokemonInstance defensor, Move movimiento)
+    {
+        AttackSystem.UseMove(atacante, defensor, movimiento);
+        MostrarFeedback($"{atacante.data.name} usó {movimiento.name}!");
+
+        if (KoSystem.CheckKO(defensor))
+        {
+            MostrarFeedback($"{atacante.data.name} usó {movimiento.name}!\n" +
+                            $"¡{defensor.data.name} fue derrotado!");
+            zonaActivaRival.LiberarZona();
+        }
+
+        // En TCG Pocket atacar termina el turno automáticamente
+        // Si quieres ese comportamiento descomenta la línea siguiente:
+        // controladorTurnos?.SolicitarCambiarTurno();
+
         ActualizarBotones();
     }
 
-    void IntentarAtaque()
+    // ── ENERGÍA ───────────────────────────────────────────────────────────────
+
+    private void IntentarAdjuntarEnergia()
     {
-        void IntentarAtaque()
-        {
-            if (!controladorTurnos.EsMiTurno())
-                return;
+        if (!PuedoActuar()) return;
 
-            PokemonInstance atacante = zonaActivaLocal.pokemonEnZona;
-            PokemonInstance defensor = zonaActivaRival.pokemonEnZona;
-
-            if (atacante == null || defensor == null)
-            {
-                textoResultado.text = "Faltan Pok�mon.";
-                return;
-            }
-
-            attackUI.ShowAttacks(atacante, movimiento =>
-            {
-                EjecutarAtaque(atacante, defensor, movimiento);
-            });
-        }
-    }
-
-
-
-    void IntentarAdjuntarEnergia()
-    {
-        if (!controladorTurnos.EsMiTurno()) return;
         if (energiaUsadaEsteTurno)
         {
-            textoResultado.text = "Ya adjuntaste energ�a este turno.";
+            MostrarFeedback("Ya adjuntaste energía este turno.");
             return;
         }
 
         PokemonInstance objetivo = zonaActivaLocal.pokemonEnZona;
         if (objetivo == null)
         {
-            textoResultado.text = "No hay Pok�mon activo para darle energ�a.";
+            MostrarFeedback("No hay Pokémon activo para darle energía.");
             return;
         }
 
-        Debug.Log("zonaActivaLocal = " + zonaActivaLocal);
-        Debug.Log("pokemonEnZona = " + zonaActivaLocal?.pokemonEnZona);
         EnergySystem.AttachEnergy(objetivo);
-        //energiaUsadaEsteTurno = true;
-        textoResultado.text = $"Energ�a adjuntada a {objetivo.data.name}. Total: {objetivo.attachedEnergy}";
+        energiaUsadaEsteTurno = true;
+        MostrarFeedback($"Energía adjuntada a {objetivo.data.name}. Total: {objetivo.attachedEnergy}");
         ActualizarBotones();
     }
 
-    void IntentarRetirada()
+    // ── RETIRADA ──────────────────────────────────────────────────────────────
+
+    private void IntentarRetirada()
     {
-        if (!controladorTurnos.EsMiTurno()) return;
+        if (!PuedoActuar()) return;
 
         PokemonInstance activo = zonaActivaLocal.pokemonEnZona;
-        if (activo == null) return;
+        if (activo == null)
+        {
+            MostrarFeedback("No tienes Pokémon activo.");
+            return;
+        }
 
         if (!RetreatSystem.CanRetreat(activo))
         {
-            textoResultado.text = $"Necesitas {activo.data.retreat_cost} energ�a para retirar.";
+            MostrarFeedback($"Necesitas {activo.data.retreat_cost} energía para retirar.");
             return;
         }
 
+        // Buscamos la carta visual que está en la zona activa
+        GameObject zonaBanca = GameObject.Find("Banca");
+        if (zonaBanca == null)
+        {
+            MostrarFeedback("No se encontró la Banca.");
+            return;
+        }
+
+        // Movemos la carta visual del activo a la banca
+        Transform zonaActivaTransform = zonaActivaLocal.transform;
+        if (zonaActivaTransform.childCount > 0)
+        {
+            Transform cartaVisual = zonaActivaTransform.GetChild(0);
+            cartaVisual.SetParent(zonaBanca.transform);
+
+            // Reposicionamos la carta en la banca
+            RectTransform rect = cartaVisual.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, -0.2f);
+                rect.anchoredPosition = Vector2.zero;
+                rect.localPosition = Vector3.zero;
+                rect.localRotation = Quaternion.identity;
+                rect.localScale = Vector3.one;
+            }
+
+            // Reactivamos el drag de la carta para que pueda volver a arrastrarse
+            CartaInteractiva ci = cartaVisual.GetComponent<CartaInteractiva>();
+            if (ci != null)
+            {
+                CanvasGroup cg = cartaVisual.GetComponent<CanvasGroup>();
+                if (cg != null) cg.blocksRaycasts = true;
+            }
+        }
+
+        // Descuentan la energía del costo de retirada
         RetreatSystem.Retreat(activo);
-        textoResultado.text = $"{activo.data.name} se retir�.";
-        // Aqu� luego agregas la l�gica para promover desde la banca
+
+        // Liberamos la zona activa
+        zonaActivaLocal.LiberarZona();
+
+        MostrarFeedback($"{activo.data.name} se retiró a la banca. Arrastra un Pokémon de la banca al activo.");
         ActualizarBotones();
     }
 
-    void ActualizarBotones()
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private bool PuedoActuar()
+    {
+        if (controladorTurnos != null && !controladorTurnos.EsMiTurno())
+        {
+            MostrarFeedback("No es tu turno.");
+            return false;
+        }
+        return true;
+    }
+
+    private void ActualizarBotones()
     {
         bool esMiTurno = controladorTurnos != null && controladorTurnos.EsMiTurno();
-        btnAtacar.interactable = esMiTurno && zonaActivaLocal.EstaOcupada() && zonaActivaRival.EstaOcupada();
-        btnEnergia.interactable = esMiTurno && !energiaUsadaEsteTurno && zonaActivaLocal.EstaOcupada();
-        btnRetirada.interactable = esMiTurno && zonaActivaLocal.EstaOcupada();
+        bool hayLocal = zonaActivaLocal != null && zonaActivaLocal.EstaOcupada();
+        bool hayRival = zonaActivaRival != null && zonaActivaRival.EstaOcupada();
+
+        btnAtacar.interactable = esMiTurno && hayLocal && hayRival;
+        btnEnergia.interactable = esMiTurno && hayLocal && !energiaUsadaEsteTurno;
+        btnRetirada.interactable = esMiTurno && hayLocal;
     }
 
-    private void EjecutarAtaque(PokemonInstance atacante, PokemonInstance defensor, Move movimiento)
+    private void DesactivarTodosBotones()
     {
-        if (!AttackSystem.CanUseMove(atacante, movimiento))
-        {
-            textoResultado.text = "No hay suficiente energ�a.";
-            return;
-        }
+        btnAtacar.interactable = false;
+        btnEnergia.interactable = false;
+        btnRetirada.interactable = false;
+    }
 
-        AttackSystem.UseMove(atacante, defensor, movimiento);
-
-        textoResultado.text =
-            $"{atacante.data.name} us� {movimiento.name}!";
-
-        if (KoSystem.CheckKO(defensor))
-        {
-            textoResultado.text +=
-                $"\n�{defensor.data.name} fue derrotado!";
-
-            zonaActivaRival.LiberarZona();
-        }
-
-        ActualizarBotones();
+    private void MostrarFeedback(string mensaje)
+    {
+        if (textoResultado != null)
+            textoResultado.text = mensaje;
+        Debug.Log($"[Gestor_Batalla] {mensaje}");
     }
 }
