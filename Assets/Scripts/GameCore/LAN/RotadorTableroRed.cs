@@ -43,18 +43,6 @@ public class RotadorTableroRed : MonoBehaviour
                       $"J1→{zonaActivaJ1.anchoredPosition} | J2→{zonaActivaJ2.anchoredPosition}");
         }
 
-        // También intercambiar Mano y Banca si están asignadas
-        if (manoJugador != null && bancaJugador != null)
-        {
-            Vector2 posMano = manoJugador.anchoredPosition;
-            Vector2 posBanca = bancaJugador.anchoredPosition;
-
-            manoJugador.anchoredPosition = posBanca;
-            bancaJugador.anchoredPosition = posMano;
-
-            Debug.Log($"[RotadorTableroRed] Mano y Banca intercambiadas.");
-        }
-
         yaIntercambiado = true;
         Debug.Log("[RotadorTableroRed] Reordenamiento completado para el cliente.");
     }
