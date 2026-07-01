@@ -1,5 +1,6 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class CardTablero : MonoBehaviour
 {
@@ -13,6 +14,9 @@ public class CardTablero : MonoBehaviour
     [SerializeField] private TextMeshProUGUI descripcionTexto;
     [SerializeField] private TextMeshProUGUI efectoTexto;
     [SerializeField] private TextMeshProUGUI costeRetiradaTexto;
+    [SerializeField] private RawImage cardImage;
+    [SerializeField] private CardImageLoader imageLoader;
+
 
     [HideInInspector] public TCGPCard cardData;
 
@@ -32,5 +36,7 @@ public class CardTablero : MonoBehaviour
         if (descripcionTexto != null) descripcionTexto.text = carta.description;
         if (efectoTexto != null) efectoTexto.text = carta.effect;
         if (costeRetiradaTexto != null) costeRetiradaTexto.text = carta.retreat_cost.ToString();
+
+        imageLoader.LoadImage(carta.image_url, cardImage);
     }
 }

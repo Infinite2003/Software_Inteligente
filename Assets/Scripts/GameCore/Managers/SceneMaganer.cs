@@ -6,7 +6,25 @@ public class SceneMaganer : MonoBehaviour
     public void LoadScene(string sceneName)
     {
         if (sceneName != string.Empty)
+        {
+            switch (sceneName)
+            {
+                case "Decks":
+                    AudioManager._instance.PlaySFX("AButton");
+                    AudioManager._instance.PlayMusic("DeckScreenTheme");
+                    break;
+                case "Play":
+                    AudioManager._instance.PlaySFX("AButton");
+                    AudioManager._instance.PlayMusic("BattleTheme");
+                    break;
+                case "MainMenu":
+                    AudioManager._instance.PlaySFX("ReturnButton");
+                    AudioManager._instance.PlayMusic("TitleScreenTheme");
+                    break;
+            }
+            
             SceneManager.LoadScene(sceneName);
+        }
         else
             Debug.LogWarning("Scene not selected");
     }

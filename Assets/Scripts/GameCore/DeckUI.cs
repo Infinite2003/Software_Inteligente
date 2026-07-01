@@ -27,7 +27,7 @@ public class DeckUI : MonoBehaviour
 
     public void SetSelected(bool selected)
     {
-        if (buttonImage != null)
+        if (buttonImage != null) { }
             buttonImage.color = selected ? selectedColor : deselectedColor;
     }
 }

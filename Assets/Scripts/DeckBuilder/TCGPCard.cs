@@ -26,6 +26,8 @@ public class TCGPCard
     public List<Ability> ability;
     public List<Move> moves;
     public List<Pack> packs;
+
+    public string image_url;
 }
 
 [Serializable]
@@ -34,7 +36,7 @@ public class Move
     public List<string> cost;
     public string name;
     public string damage;
-    public string effect; // Efecto del movimiento (ej: "Cura 30 puntos de daño a este Pokémon.")
+    public string effect;
 }
 
 [System.Serializable]

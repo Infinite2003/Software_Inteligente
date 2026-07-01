@@ -13,8 +13,8 @@ public class DeckListManager : MonoBehaviour
     [SerializeField] private TMP_InputField deckNameInput;
     [SerializeField] private GameObject deckGenerationWindow;
 
-    [SerializeField] private Transform generatedCardContentParent; //Padre de las cartas generadas, que se ven en la ventana que se abre
-    [SerializeField] private Transform cardContentParent; //Padre de las cartas del mazo seleccionado, en la pantalla inicial
+    [SerializeField] private Transform generatedCardContentParent;
+    [SerializeField] private Transform cardContentParent; 
     [SerializeField] private Transform deckContentParent;
 
     [SerializeField] private GameObject cardItemPrefab;
@@ -41,20 +41,22 @@ public class DeckListManager : MonoBehaviour
         fightStyleDropdown.ClearOptions();
 
         fightStyleDropdown.AddOptions(
-            new System.Collections.Generic.List<string>(
+            new List<string>(
                 Enum.GetNames(typeof(BattleType))));
 
         typeDropdown.ClearOptions();
         typeDropdown.AddOptions(
-            new System.Collections.Generic.List<string>(
+            new List<string>(
                 Enum.GetNames(typeof(PokemonType))));
 
         OnTypeChanged(typeDropdown.value);
+        SetDropdownFontSize(fightStyleDropdown, 40f);
+        SetDropdownFontSize(typeDropdown, 40f);
+        SetDropdownFontSize(exDropDown, 40f);
     }
 
     private void rebuildDecks()
     {
-        Debug.Log("Cantidad de mazos guardados: " + lightweightDecks.Count);
         if (lightweightDecks == null || CardGameManager._instance.cardDatabase == null)
             return;
 
@@ -83,6 +85,7 @@ public class DeckListManager : MonoBehaviour
 
     public void GenerateDeck()
     {
+        AudioManager._instance.PlaySFX("AButton");
         CardGameManager._instance.CreateDeck();
 
         deckGenerationWindow.SetActive(true);
@@ -91,6 +94,7 @@ public class DeckListManager : MonoBehaviour
 
     public void CloseGeneratedDeckWindow()
     {
+        AudioManager._instance.PlaySFX("ReturnButton");
         deckGenerationWindow.SetActive(false);
     }
 
@@ -100,7 +104,6 @@ public class DeckListManager : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(deckName))
         {
-            Debug.LogWarning("Deck name is empty");
             return;
         }
 
@@ -118,14 +121,13 @@ public class DeckListManager : MonoBehaviour
             savedDeck.cardIDs.Add(card.id);
         }
 
+        AudioManager._instance.PlaySFX("AButton");
         DeckSaveSystem.SaveDeck(savedDeck);
 
-        Debug.Log("Deck saved");
 
         deckList.Add(BuildRuntimeDecks(savedDeck));
         PopulateDeckView(deckList, deckContentParent);
 
-        // Limpiamos la entrada para el próximo mazo
         deckNameInput.text = "";
 
         CloseGeneratedDeckWindow();
@@ -191,18 +193,17 @@ public class DeckListManager : MonoBehaviour
         }
 
         CardGameManager._instance.currentDeck = selectedDeck.cards;
+        AudioManager._instance.PlaySFX("DeckSelected");
 
         PopulateCardView(selectedDeck.cards, cardContentParent);
     }
 
-    //Seleccion del tipo de juego y carta
 
     public void OnFightStyleChanged(int index)
     {
         BattleType selectedBattleType = (BattleType)index;
         CardGameManager._instance.deckPreferences.playstyle = selectedBattleType;
 
-        Debug.Log("Battle Type: " + CardGameManager._instance.deckPreferences.playstyle);
 
     }
 
@@ -210,51 +211,60 @@ public class DeckListManager : MonoBehaviour
     {
         PokemonType selectedType = (PokemonType)index;
         CardGameManager._instance.deckPreferences.preferredType = selectedType;
-
         CardGameManager._instance.deckPreferences.anchorCard = null;
 
         exDropDown.ClearOptions();
 
         List<TCGPCard> exCards = CardGameManager._instance.GetEXCardsByType(selectedType);
-        exDropDown.AddOptions(exCards.Select(card => card.name).Distinct().ToList());
-        exDropDown.RefreshShownValue();
 
-        if (exCards.Count > 0)
+        if (exCards.Count == 0)
         {
-            CardGameManager._instance.deckPreferences.anchorCard = exCards[0];
-            Debug.Log("Anchor por defecto: " + exCards[0].name);
+            exDropDown.AddOptions(new List<string> { "No hay cartas EX" });
+            exDropDown.interactable = false;
+            CardGameManager._instance.deckPreferences.anchorCard = null;
         }
         else
         {
-            Debug.LogWarning("No hay cartas EX para el tipo: " + selectedType);
+            exDropDown.interactable = true;
+            List<string> options = new List<string> { "Ninguno" };
+            options.AddRange(exCards.Select(card => card.name).Distinct());
+            exDropDown.AddOptions(options);
+            exDropDown.value = 0;
         }
 
-        Debug.Log("Tipo seleccionado: " + selectedType);
+        exDropDown.RefreshShownValue();
     }
 
     public void OnExChanged(int index)
     {
+        if (index == 0)
+        {
+            CardGameManager._instance.deckPreferences.anchorCard = null;
+            return;
+        }
+
         List<TCGPCard> exCards = CardGameManager._instance.GetEXCardsByType((PokemonType)typeDropdown.value);
         if (exCards == null || exCards.Count == 0)
         {
             CardGameManager._instance.deckPreferences.anchorCard = null;
-            Debug.LogWarning("No hay cartas EX disponibles para este tipo.");
             return;
         }
 
-        // Obtener la lista única de nombres en el mismo orden del dropdown
         var distinctNames = exCards.Select(card => card.name).Distinct().ToList();
-        if (index >= distinctNames.Count) return;
+        int adjustedIndex = index - 1;
 
-        string selectedName = distinctNames[index];
-        // Encontrar la primera carta de la DB que coincida con este nombre
+        if (adjustedIndex >= distinctNames.Count) return;
+
+        string selectedName = distinctNames[adjustedIndex];
         CardGameManager._instance.deckPreferences.anchorCard = exCards.FirstOrDefault(c => c.name == selectedName) ?? exCards[0];
 
-        Debug.Log("EX seleccionado: " + CardGameManager._instance.deckPreferences.anchorCard.name);
+        if (selectedName.Equals("Pikachu ex", StringComparison.OrdinalIgnoreCase))
+            AudioManager._instance.PlaySFX("Pikachu");
     }
     public void ClearAllDecks()
     {
         DeckSaveSystem.DeleteAllDecks();
+        AudioManager._instance.PlaySFX("ReturnButton");
 
         lightweightDecks.Clear();
         deckList.Clear();
@@ -265,4 +275,12 @@ public class DeckListManager : MonoBehaviour
         Debug.Log("Todos los mazos han sido eliminados.");
     }
 
+    private void SetDropdownFontSize(TMP_Dropdown dropdown, float fontSize, float itemHeight = 50f)
+    {
+        dropdown.itemText.fontSize = fontSize;
+
+        RectTransform itemRect = dropdown.itemText.transform.parent.GetComponent<RectTransform>();
+        if (itemRect != null)
+            itemRect.sizeDelta = new Vector2(itemRect.sizeDelta.x, itemHeight);
+    }   
 }
