@@ -16,9 +16,14 @@ public class Gestor_Batalla : MonoBehaviour
     [SerializeField] private Button btnRetirada;
     [SerializeField] private TextMeshProUGUI textoResultado;
 
+    [SerializeField] private AttackSelectionUI attackUI;
+    
     private bool energiaUsadaEsteTurno = false;
 
     private ControladorTurnos controladorTurnos;
+
+    private bool esperandoSeleccionEnergia = false;
+
 
     void Start()
     {
@@ -46,62 +51,28 @@ public class Gestor_Batalla : MonoBehaviour
 
     void IntentarAtaque()
     {
-        if (!controladorTurnos.EsMiTurno()) return;
-
-        PokemonInstance atacante = zonaActivaLocal.pokemonEnZona;
-        PokemonInstance defensor = zonaActivaRival.pokemonEnZona;
-
-        if (atacante == null || defensor == null)
+        void IntentarAtaque()
         {
-            Debug.Log("zonaActivaLocal = " + zonaActivaLocal);
-            Debug.Log("pokemonEnZona = " + zonaActivaLocal?.pokemonEnZona);
-            textoResultado.text = "Faltan Pokémon en el tablero.";
-            return;
+            if (!controladorTurnos.EsMiTurno())
+                return;
+
+            PokemonInstance atacante = zonaActivaLocal.pokemonEnZona;
+            PokemonInstance defensor = zonaActivaRival.pokemonEnZona;
+
+            if (atacante == null || defensor == null)
+            {
+                textoResultado.text = "Faltan Pokémon.";
+                return;
+            }
+
+            attackUI.ShowAttacks(atacante, movimiento =>
+            {
+                EjecutarAtaque(atacante, defensor, movimiento);
+            });
         }
-
-        if (atacante.data.moves == null || atacante.data.moves.Count == 0)
-        {
-            textoResultado.text = $"{atacante.data.name} no tiene ataques.";
-            return;
-        }
-
-        // Por ahora usa el primer ataque (luego puedes añadir un selector de movimiento)
-        Move movimiento = atacante.data.moves[0];
-
-        if (!AttackSystem.CanUseMove(atacante, movimiento))
-        {
-            textoResultado.text = "No hay suficiente energía para atacar.";
-            return;
-        }
-
-        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-        void AtacarServerRpc(int dañoCalculado)
-        {
-            // El servidor le dice a la zona rival que reciba daño
-            zonaActivaRival.RecibirDaño(dañoCalculado);
-
-            if (KoSystem.CheckKO(zonaActivaRival.pokemonEnZona))
-                ZonaKoClientRpc();
-        }
-
-        [Rpc(SendTo.Everyone)]
-        void ZonaKoClientRpc()
-        {
-            textoResultado.text = "¡Pokémon rival derrotado!";
-            zonaActivaRival.LiberarZona();
-        }
-        textoResultado.text = $"{atacante.data.name} usó {movimiento.name}!";
-
-        // Revisar KO inmediatamente después del ataque
-        if (KoSystem.CheckKO(defensor))
-        {
-            textoResultado.text += $"\n¡{defensor.data.name} fue derrotado!";
-            zonaActivaRival.LiberarZona();
-            // Aquí puedes llamar a tu lógica de puntos de premio
-        }
-
-        ActualizarBotones();
     }
+
+
 
     void IntentarAdjuntarEnergia()
     {
@@ -122,7 +93,7 @@ public class Gestor_Batalla : MonoBehaviour
         Debug.Log("zonaActivaLocal = " + zonaActivaLocal);
         Debug.Log("pokemonEnZona = " + zonaActivaLocal?.pokemonEnZona);
         EnergySystem.AttachEnergy(objetivo);
-        energiaUsadaEsteTurno = true;
+        //energiaUsadaEsteTurno = true;
         textoResultado.text = $"Energía adjuntada a {objetivo.data.name}. Total: {objetivo.attachedEnergy}";
         ActualizarBotones();
     }
@@ -152,5 +123,29 @@ public class Gestor_Batalla : MonoBehaviour
         btnAtacar.interactable = esMiTurno && zonaActivaLocal.EstaOcupada() && zonaActivaRival.EstaOcupada();
         btnEnergia.interactable = esMiTurno && !energiaUsadaEsteTurno && zonaActivaLocal.EstaOcupada();
         btnRetirada.interactable = esMiTurno && zonaActivaLocal.EstaOcupada();
+    }
+
+    private void EjecutarAtaque(PokemonInstance atacante, PokemonInstance defensor, Move movimiento)
+    {
+        if (!AttackSystem.CanUseMove(atacante, movimiento))
+        {
+            textoResultado.text = "No hay suficiente energía.";
+            return;
+        }
+
+        AttackSystem.UseMove(atacante, defensor, movimiento);
+
+        textoResultado.text =
+            $"{atacante.data.name} usó {movimiento.name}!";
+
+        if (KoSystem.CheckKO(defensor))
+        {
+            textoResultado.text +=
+                $"\n¡{defensor.data.name} fue derrotado!";
+
+            zonaActivaRival.LiberarZona();
+        }
+
+        ActualizarBotones();
     }
 }
