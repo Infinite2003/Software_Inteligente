@@ -1,53 +1,61 @@
-using Unity.Netcode;
+ï»¿using Unity.Netcode;
 using UnityEngine;
+using System.Collections;
 
-public class RotadorTableroRed : NetworkBehaviour
+public class RotadorTableroRed : MonoBehaviour
 {
-    [Header("Contenedores a Rotar")]
-    [SerializeField] private RectTransform canvasPrincipal;
+    [Header("Elementos a intercambiar para el J2")]
+    [SerializeField] private RectTransform zonaActivaJ1;
+    [SerializeField] private RectTransform zonaActivaJ2;
+    [SerializeField] private RectTransform manoJugador;
+    [SerializeField] private RectTransform bancaJugador;
 
-    // [7] Flag para evitar rotar dos veces si el cliente reconecta
-    private bool yaRotado = false;
+    private bool yaIntercambiado = false;
 
-    public override void OnNetworkSpawn()
+    void Start()
     {
-        // [5] Validamos que el canvas esté asignado antes de cualquier lógica
-        if (canvasPrincipal == null)
-        {
-            Canvas canvas = Object.FindFirstObjectByType<Canvas>();
-            if (canvas != null)
-            {
-                canvasPrincipal = canvas.GetComponent<RectTransform>();
-                Debug.Log("[RotadorTableroRed] Canvas encontrado automáticamente.");
-            }
-        }
-
-        if (canvasPrincipal == null)
-        {
-            Debug.LogError("[RotadorTableroRed] No se encontró el Canvas en la escena.");
-            return;
-        }
-
-        if (IsHost)
-        {
-            Debug.Log("Jugador 1 (Host) detectado. Tablero en posición original.");
-            return;
-        }
-
-        // [6] Simplificado: cualquier no-servidor es el cliente que debe rotar
-        if (!IsServer)
-        {
-            Debug.Log("Jugador 2 (Cliente) detectado. Rotando el tablero 180 grados.");
-            RotarTablero();
-        }
+        StartCoroutine(EsperarRedYReordenar());
     }
 
-    private void RotarTablero()
+    private IEnumerator EsperarRedYReordenar()
     {
-        // [7] Si ya fue rotado antes (ej: reconexión), no volvemos a rotar
-        if (yaRotado) return;
+        yield return new WaitUntil(() =>
+            NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.IsListening);
 
-        canvasPrincipal.localRotation = Quaternion.Euler(0, 0, 180);
-        yaRotado = true;
+        if (yaIntercambiado) yield break;
+        if (NetworkManager.Singleton.IsHost)
+        {
+            Debug.Log("[RotadorTableroRed] Host: sin cambios.");
+            yield break;
+        }
+
+        // Es cliente: intercambiar posiciones de las zonas activas
+        if (zonaActivaJ1 != null && zonaActivaJ2 != null)
+        {
+            Vector2 posJ1 = zonaActivaJ1.anchoredPosition;
+            Vector2 posJ2 = zonaActivaJ2.anchoredPosition;
+
+            zonaActivaJ1.anchoredPosition = posJ2;
+            zonaActivaJ2.anchoredPosition = posJ1;
+
+            Debug.Log($"[RotadorTableroRed] Zonas activas intercambiadas: " +
+                      $"J1â†’{zonaActivaJ1.anchoredPosition} | J2â†’{zonaActivaJ2.anchoredPosition}");
+        }
+
+        // TambiÃ©n intercambiar Mano y Banca si estÃ¡n asignadas
+        if (manoJugador != null && bancaJugador != null)
+        {
+            Vector2 posMano = manoJugador.anchoredPosition;
+            Vector2 posBanca = bancaJugador.anchoredPosition;
+
+            manoJugador.anchoredPosition = posBanca;
+            bancaJugador.anchoredPosition = posMano;
+
+            Debug.Log($"[RotadorTableroRed] Mano y Banca intercambiadas.");
+        }
+
+        yaIntercambiado = true;
+        Debug.Log("[RotadorTableroRed] Reordenamiento completado para el cliente.");
     }
 }

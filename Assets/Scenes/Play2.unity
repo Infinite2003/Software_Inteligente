@@ -1010,7 +1010,6 @@ GameObject:
   - component: {fileID: 551162922}
   - component: {fileID: 551162921}
   - component: {fileID: 551162920}
-  - component: {fileID: 551162919}
   m_Layer: 0
   m_Name: RedManager
   m_TagString: Untagged
@@ -1018,20 +1017,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &551162919
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 551162918}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 309ca5f32dc054342b5cfb4801315a99, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RotadorTableroRed
-  ShowTopMostFoldoutHeaderGroup: 1
-  canvasPrincipal: {fileID: 0}
 --- !u!114 &551162920
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1533,6 +1518,7 @@ GameObject:
   - component: {fileID: 892264277}
   - component: {fileID: 892264276}
   - component: {fileID: 892264275}
+  - component: {fileID: 892264280}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1666,6 +1652,22 @@ MonoBehaviour:
   btnCliente: {fileID: 653363241}
   contenedorMenuBotones: {fileID: 1980688974}
   inputIP: {fileID: 0}
+--- !u!114 &892264280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 892264273}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 309ca5f32dc054342b5cfb4801315a99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RotadorTableroRed
+  zonaActivaJ1: {fileID: 583510173}
+  zonaActivaJ2: {fileID: 1913988917}
+  manoJugador: {fileID: 0}
+  bancaJugador: {fileID: 0}
 --- !u!1 &899686587
 GameObject:
   m_ObjectHideFlags: 0
